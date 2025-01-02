@@ -1,4 +1,4 @@
-# `abi`: Easy to use ABI encoding and decoding functionalities from EVM blockchains
+# `multicall`: Perform multiple calls using only one RPC call
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/omnes-tech/multicall.svg)](https://pkg.go.dev/github.com/omnes-tech/multicall)
 [![Go Report Card](https://goreportcard.com/badge/github.com/omnes-tech/multicall)](https://goreportcard.com/report/github.com/omnes-tech/multicall)
