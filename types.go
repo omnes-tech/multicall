@@ -84,7 +84,9 @@ func NewCalls(
 ) Calls {
 	calls := make(Calls, len(targets))
 	for i, target := range targets {
-		calls[i] = NewCall(target, funcSignatures[i], argss[i], returnTypess[i], values[i])
+		args, returnTypes, value := setParameters(i, argss, returnTypess, values)
+
+		calls[i] = NewCall(target, funcSignatures[i], args, returnTypes, value)
 	}
 
 	return calls
@@ -114,7 +116,9 @@ func NewCallsWithFailure(
 ) CallsWithFailure {
 	calls := make(CallsWithFailure, len(targets))
 	for i, target := range targets {
-		calls[i] = NewCallWithFailure(target, funcSignatures[i], argss[i], returnTypess[i], values[i], requireSuccesss[i])
+		args, returnTypes, value := setParameters(i, argss, returnTypess, values)
+
+		calls[i] = NewCallWithFailure(target, funcSignatures[i], args, returnTypes, value, requireSuccesss[i])
 	}
 
 	return calls
@@ -153,6 +157,33 @@ func ParseCallWithFailureToCallsWithFailure(calls []CallWithFailure) CallsWithFa
 		}
 	}
 	return result
+}
+
+func setParameters(
+	index int, argss [][]interface{}, returnTypess [][]string, values []*big.Int,
+) ([]any, []string, *big.Int) {
+	var args []any
+	if argss == nil {
+		args = nil
+	} else {
+		args = argss[index]
+	}
+
+	var returnTypes []string
+	if returnTypess == nil {
+		returnTypes = nil
+	} else {
+		returnTypes = returnTypess[index]
+	}
+
+	var value *big.Int
+	if values == nil {
+		value = nil
+	} else {
+		value = values[index]
+	}
+
+	return args, returnTypes, value
 }
 
 func (c Calls) GetTarget(i int) *common.Address {
