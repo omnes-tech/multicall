@@ -87,7 +87,7 @@ func deploylessAggregateStatic(calls Calls, rpc string) (Result, error) {
 			return Result{Success: false, Error: err}, err
 		}
 
-		result = append(result, result_i...)
+		result = append(result, result_i)
 	}
 
 	return Result{Success: true, Result: result}, nil
