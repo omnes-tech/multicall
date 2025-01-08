@@ -113,12 +113,8 @@ github.com/mmcloughlin/addchain v0.4.0/go.mod h1:A86O+tHqZLMNO4w6ZZ4FlVQEadcoqky
 github.com/mmcloughlin/profile v0.1.1/go.mod h1:IhHD7q1ooxgwTgjxQYkACGA77oFTDdFVejUS1/tS/qU=
 github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
-github.com/omnes-tech/abi v0.1.26 h1:r5cpfoB8LCrTTF1Ms/a93YR476qzVK8Hka7HlVNwg7c=
-github.com/omnes-tech/abi v0.1.26/go.mod h1:2AIFy6ul8xBO4Af8FFJDCJpvQ5KpA1MuZgKyPB9Thq4=
-github.com/omnes-tech/abi v0.1.27 h1:RzEXdvsJNPCLs1HYZoF3h1qpnrqzVo+xZh64OuM9y8g=
-github.com/omnes-tech/abi v0.1.27/go.mod h1:2AIFy6ul8xBO4Af8FFJDCJpvQ5KpA1MuZgKyPB9Thq4=
-github.com/omnes-tech/abi v0.1.28 h1:bmhC/WKxwwVymj2qHNlLotWu1trEwwLn+07Dp9yBsvk=
-github.com/omnes-tech/abi v0.1.28/go.mod h1:2AIFy6ul8xBO4Af8FFJDCJpvQ5KpA1MuZgKyPB9Thq4=
+github.com/omnes-tech/abi v0.1.30 h1:bEjzJWI31XZl+euK2O7eemdU3Y21yzBtcnM8kTN1sbM=
+github.com/omnes-tech/abi v0.1.30/go.mod h1://9ZAmSyjVBNCREiaT9knKFsRdIBRndvyyiIjbK1NYQ=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
