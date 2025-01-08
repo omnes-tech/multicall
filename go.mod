@@ -4,7 +4,7 @@ go 1.22.3
 
 require (
 	github.com/ethereum/go-ethereum v1.14.12
-	github.com/omnes-tech/abi v0.1.27
+	github.com/omnes-tech/abi v0.1.28
 )
 
 require (

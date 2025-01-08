@@ -16,8 +16,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// ReadContract makes a call to a contract and returns the returned bytecode.
-func ReadContract(rpc string, from, to *common.Address, encodedCall []byte) ([]byte, error) {
+// readContract makes a call to a contract and returns the returned bytecode.
+func readContract(rpc string, from, to *common.Address, encodedCall []byte) ([]byte, error) {
 	client, err := ethclient.Dial(rpc)
 	if err != nil {
 		return []byte{}, fmt.Errorf("error establishing RPC connection: %v", err)
@@ -43,8 +43,8 @@ func ReadContract(rpc string, from, to *common.Address, encodedCall []byte) ([]b
 	return result, nil
 }
 
-// CreateTransaction creates a new transaction object.
-func CreateTransaction(
+// createTransaction creates a new transaction object.
+func createTransaction(
 	rpc string,
 	from *common.Address,
 	to *common.Address,
@@ -89,8 +89,8 @@ func CreateTransaction(
 	return types.NewTransaction(nonce, *to, msgValue, gasLimit, gasPrice, nil), nil
 }
 
-// SendSignedTransaction sends a signed transaction
-func SendSignedTransaction(rpc string, tx *types.Transaction) (*types.Receipt, error) {
+// sendSignedTransaction sends a signed transaction
+func sendSignedTransaction(rpc string, tx *types.Transaction) (*types.Receipt, error) {
 	client, err := ethclient.Dial(rpc)
 	if err != nil {
 		return nil, fmt.Errorf("error establishing RPC connection: %v", err)

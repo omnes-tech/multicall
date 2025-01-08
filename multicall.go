@@ -29,7 +29,7 @@ func NewClient(multiCallType MultiCallType, rpc string, signer *SignerInterface)
 
 	}
 	if (multiCallType == OMNES && OMNES_MULTICALL_ADDRESS == common.Address{}) {
-		log.Println("no OMNES address found. Using GENERAL address")
+		log.Printf("no OMNES address found. Using GENERAL address\n\n")
 		multiCallType = GENERAL
 	}
 
@@ -51,14 +51,14 @@ func NewClient(multiCallType MultiCallType, rpc string, signer *SignerInterface)
 		}
 
 		if len(bytecode) == 0 {
-			log.Println("no deployed contract found. Using deployless method")
+			log.Printf("no deployed contract found. Using deployless method\n\n")
 
 			writeAddress = nil
 			multiCallType = DEPLOYLESS
 		}
 
 		toDeployless := writeAddress.Cmp(OMNES_MULTICALL_ADDRESS) == 0
-		contractDeployed, newAddress, err := isContract(client, writeAddress, toDeployless)
+		contractDeployed, newAddress, err := isContract(client, writeAddress, toDeployless, false)
 		if err != nil {
 			return nil, fmt.Errorf("error checking contract: %v", err)
 		}
@@ -81,7 +81,7 @@ func NewClient(multiCallType MultiCallType, rpc string, signer *SignerInterface)
 		}, nil
 	} else {
 		toDeployless := writeAddress.Cmp(OMNES_MULTICALL_ADDRESS) == 0
-		contractDeployed, newAddress, err := isContract(client, writeAddress, toDeployless)
+		contractDeployed, newAddress, err := isContract(client, writeAddress, toDeployless, false)
 		if err != nil {
 			return nil, fmt.Errorf("error checking contract: %v", err)
 		}
@@ -96,7 +96,7 @@ func NewClient(multiCallType MultiCallType, rpc string, signer *SignerInterface)
 		}
 
 		toDeployless = readAddress.Cmp(OMNES_MULTICALL_ADDRESS) == 0
-		contractDeployed, newAddress, err = isContract(client, readAddress, toDeployless)
+		contractDeployed, newAddress, err = isContract(client, readAddress, toDeployless, true)
 		if err != nil {
 			return nil, fmt.Errorf("error checking contract: %v", err)
 		}
@@ -316,22 +316,30 @@ func isWithValue(calls []CallWithFailure) (bool, string) {
 	return false, "aggregate3((address,bool,bytes)[])"
 }
 
-func isContract(client *ethclient.Client, address *common.Address, toDeployless bool) (bool, *common.Address, error) {
+func isContract(client *ethclient.Client, address *common.Address, toDeployless bool, justForReading bool) (bool, *common.Address, error) {
 	bytecode, err := client.CodeAt(context.Background(), *address, nil)
 	if err != nil {
 		return false, nil, fmt.Errorf("error getting bytecode: %v", err)
 	}
 
 	if len(bytecode) == 0 {
+		var logMsg string
+
 		if toDeployless {
-			log.Println("no deployed contract found. Using deployless method")
-
-			return false, nil, nil
+			logMsg = "no deployed contract found. Using deployless method"
 		} else {
-			log.Println("no deployed contract found. Checking Omnes contract")
-
-			return isContract(client, &OMNES_MULTICALL_ADDRESS, true)
+			logMsg = "no deployed contract found. Checking Omnes contract"
 		}
+		if justForReading {
+			logMsg += " (reading)"
+		}
+		logMsg += "\n\n"
+
+		if toDeployless {
+			return false, nil, nil
+		}
+
+		return isContract(client, &OMNES_MULTICALL_ADDRESS, true, justForReading)
 	}
 
 	return true, address, nil

@@ -43,7 +43,7 @@ func tryAggregate(
 		return Result{}, err
 	}
 
-	tx, err := CreateTransaction(rpc, signer.GetAddress(), to, msgValue, callData)
+	tx, err := createTransaction(rpc, signer.GetAddress(), to, msgValue, callData)
 	if err != nil {
 		return Result{}, err
 	}
@@ -73,7 +73,7 @@ func tryAggregate(
 		return Result{}, err
 	}
 
-	receipt, err := SendSignedTransaction(rpc, signedTx)
+	receipt, err := sendSignedTransaction(rpc, signedTx)
 	if err != nil {
 		return Result{}, err
 	}
@@ -113,7 +113,7 @@ func aggregateTx(
 		return nil, nil, err
 	}
 
-	tx, err := CreateTransaction(rpc, signer.GetAddress(), to, msgValue, callData)
+	tx, err := createTransaction(rpc, signer.GetAddress(), to, msgValue, callData)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -143,7 +143,7 @@ func aggregateTx(
 		return nil, nil, err
 	}
 
-	receipt, err := SendSignedTransaction(rpc, signedTx)
+	receipt, err := sendSignedTransaction(rpc, signedTx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -276,7 +276,7 @@ func getData(
 		return Result{}, err
 	}
 
-	encodedCallResult, err := ReadContract(rpc, &ZERO_ADDRESS, to, callData)
+	encodedCallResult, err := readContract(rpc, &ZERO_ADDRESS, to, callData)
 	if err != nil {
 		return Result{}, err
 	}
@@ -296,7 +296,7 @@ func makeCall(
 	if !true {
 		log.Println(writeAddress)
 	}
-	encodedCallResult, err := ReadContract(rpc, &ZERO_ADDRESS, to, callData)
+	encodedCallResult, err := readContract(rpc, &ZERO_ADDRESS, to, callData)
 	if err != nil && !isSimulation {
 		return nil, nil, err
 	} else if isSimulation {

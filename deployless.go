@@ -36,7 +36,6 @@ func deploylessSimulation(calls Calls, rpc string) (Result, error) {
 
 	_, err = makeDeploylessCall(arrayfiedCalls, false, SIMULATION, rpc, []string{"(address,bytes,uint256)[]"})
 	if err != nil {
-		fmt.Println(err)
 		if strings.Contains(err.Error(), "execution reverted") {
 			encodedRevert, ok := parseRevertData(err)
 			if ok {
@@ -47,6 +46,7 @@ func deploylessSimulation(calls Calls, rpc string) (Result, error) {
 				if err != nil {
 					return Result{}, err
 				}
+				decodedRevert = decodedRevert[0].([]any)
 
 				for i, result := range decodedRevert {
 					decodedRevert[i].([]any)[1] = common.Bytes2Hex(result.([]any)[1].([]byte))
@@ -79,6 +79,7 @@ func deploylessAggregateStatic(calls Calls, rpc string) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	resultArgs = resultArgs[0].([]any)
 
 	var result []any
 	for i, call := range calls {
@@ -110,6 +111,7 @@ func deploylessTryAggregateStatic(calls Calls, requireSuccess bool, rpc string) 
 	if err != nil {
 		return Result{}, err
 	}
+	resultArgs = resultArgs[0].([]any)
 
 	var result []any
 	for i, call := range calls {
@@ -141,6 +143,7 @@ func deploylessTryAggregateStatic3(calls CallsWithFailure, rpc string) (Result, 
 	if err != nil {
 		return Result{}, err
 	}
+	resultArgs = resultArgs[0].([]any)
 
 	var result []any
 	for i, call := range calls {
@@ -168,6 +171,7 @@ func deploylessGetCodeLengths(addresses []*common.Address, rpc string) (Result, 
 	if err != nil {
 		return Result{}, err
 	}
+	resultArgs = resultArgs[0].([]any)
 
 	return Result{Success: true, Result: resultArgs}, nil
 }
@@ -185,6 +189,7 @@ func deploylessGetBalances(addresses []*common.Address, rpc string) (Result, err
 	if err != nil {
 		return Result{}, err
 	}
+	resultArgs = resultArgs[0].([]any)
 
 	return Result{Success: true, Result: resultArgs}, nil
 }
@@ -205,7 +210,7 @@ func deploylessGetAddressesData(addresses []*common.Address, rpc string) (Result
 
 	var result [][]any
 	for i := range addresses {
-		result = append(result, []any{resultArgs[i], resultArgs[i+len(addresses)]})
+		result = append(result, []any{resultArgs[0].([]any)[i], resultArgs[1].([]any)[i]})
 	}
 
 	return Result{Success: true, Result: result}, nil
