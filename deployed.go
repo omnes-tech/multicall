@@ -13,7 +13,7 @@ import (
 )
 
 func aggregate(
-	calls Calls, rpc string, signer SignerInterface, to *common.Address,
+	calls Calls, client *ethclient.Client, signer SignerInterface, to *common.Address,
 	funcSignature string, txReturnTypes []string, withValue bool,
 ) (Result, error) {
 	arrayfiedCalls, msgValue, err := calls.ToArray(withValue, false)
@@ -21,7 +21,7 @@ func aggregate(
 		return Result{}, err
 	}
 
-	receipt, decodedCallResult, err := aggregateTx(arrayfiedCalls, msgValue, rpc, signer, to, funcSignature, txReturnTypes)
+	receipt, decodedCallResult, err := aggregateTx(arrayfiedCalls, msgValue, client, signer, to, funcSignature, txReturnTypes)
 	if err != nil {
 		return Result{}, err
 	}
@@ -30,7 +30,7 @@ func aggregate(
 }
 
 func tryAggregate(
-	calls Calls, requireSuccess bool, rpc string, signer SignerInterface, to *common.Address,
+	calls Calls, requireSuccess bool, client *ethclient.Client, signer SignerInterface, to *common.Address,
 	funcSignature string, txReturnTypes []string, withValue bool, isMultiCall3Type bool,
 ) (Result, error) {
 	arrayfiedCalls, msgValue, err := calls.ToArray(withValue, isMultiCall3Type)
@@ -43,16 +43,10 @@ func tryAggregate(
 		return Result{}, err
 	}
 
-	tx, err := createTransaction(rpc, signer.GetAddress(), to, msgValue, callData)
+	tx, err := createTransaction(client, signer.GetAddress(), to, msgValue, callData)
 	if err != nil {
 		return Result{}, err
 	}
-
-	client, err := ethclient.Dial(rpc)
-	if err != nil {
-		return Result{}, err
-	}
-	defer client.Close()
 
 	chainId, err := client.ChainID(context.Background())
 	if err != nil {
@@ -73,7 +67,7 @@ func tryAggregate(
 		return Result{}, err
 	}
 
-	receipt, err := sendSignedTransaction(rpc, signedTx)
+	receipt, err := sendSignedTransaction(client, signedTx)
 	if err != nil {
 		return Result{}, err
 	}
@@ -87,7 +81,7 @@ func tryAggregate(
 }
 
 func tryAggregate3(
-	calls CallsWithFailure, rpc string, signer SignerInterface, to *common.Address,
+	calls CallsWithFailure, client *ethclient.Client, signer SignerInterface, to *common.Address,
 	funcSignature string, txReturnTypes []string, withValue bool, isMultiCall3Type bool,
 ) (Result, error) {
 	arrayfiedCalls, msgValue, err := calls.ToArray(withValue, isMultiCall3Type)
@@ -95,7 +89,7 @@ func tryAggregate3(
 		return Result{}, err
 	}
 
-	receipt, decodedCallResult, err := aggregateTx(arrayfiedCalls, msgValue, rpc, signer, to, funcSignature, txReturnTypes)
+	receipt, decodedCallResult, err := aggregateTx(arrayfiedCalls, msgValue, client, signer, to, funcSignature, txReturnTypes)
 	if err != nil {
 		return Result{}, err
 	}
@@ -104,7 +98,7 @@ func tryAggregate3(
 }
 
 func aggregateTx(
-	arrayfiedCalls []any, msgValue *big.Int, rpc string, signer SignerInterface,
+	arrayfiedCalls []any, msgValue *big.Int, client *ethclient.Client, signer SignerInterface,
 	to *common.Address, funcSignature string, txReturnTypes []string,
 ) (*types.Receipt, []any, error) {
 
@@ -113,16 +107,10 @@ func aggregateTx(
 		return nil, nil, err
 	}
 
-	tx, err := createTransaction(rpc, signer.GetAddress(), to, msgValue, callData)
+	tx, err := createTransaction(client, signer.GetAddress(), to, msgValue, callData)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	client, err := ethclient.Dial(rpc)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer client.Close()
 
 	chainId, err := client.ChainID(context.Background())
 	if err != nil {
@@ -143,7 +131,7 @@ func aggregateTx(
 		return nil, nil, err
 	}
 
-	receipt, err := sendSignedTransaction(rpc, signedTx)
+	receipt, err := sendSignedTransaction(client, signedTx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -157,7 +145,7 @@ func aggregateTx(
 }
 
 func aggregateStatic(
-	calls Calls, rpc string, to *common.Address, funcSignature string, txReturnTypes []string,
+	calls Calls, client *ethclient.Client, to *common.Address, funcSignature string, txReturnTypes []string,
 	isSimulation bool, multiCallType *MultiCallType, writeAddress *common.Address,
 ) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
@@ -172,7 +160,7 @@ func aggregateStatic(
 
 	decodedCallResult, decodedAggregatedCallsResultVar, err := makeCall(
 		calls,
-		rpc,
+		client,
 		to,
 		callData,
 		txReturnTypes,
@@ -188,7 +176,7 @@ func aggregateStatic(
 }
 
 func tryAggregateStatic(
-	calls Calls, requireSuccess bool, rpc string, to *common.Address, funcSignature string,
+	calls Calls, requireSuccess bool, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address,
 ) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
@@ -203,7 +191,7 @@ func tryAggregateStatic(
 
 	decodedCallResult, decodedAggregatedCallsResultVar, err := makeCall(
 		calls,
-		rpc,
+		client,
 		to,
 		callData,
 		txReturnTypes,
@@ -219,7 +207,7 @@ func tryAggregateStatic(
 }
 
 func tryAggregateStatic3(
-	calls CallsWithFailure, rpc string, to *common.Address, funcSignature string,
+	calls CallsWithFailure, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address,
 ) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
@@ -234,7 +222,7 @@ func tryAggregateStatic3(
 
 	decodedCallResult, decodedAggregatedCallsResultVar, err := makeCall(
 		calls,
-		rpc,
+		client,
 		to,
 		callData,
 		txReturnTypes,
@@ -250,25 +238,25 @@ func tryAggregateStatic3(
 }
 
 func getCodeLengths(
-	addresses []*common.Address, rpc string, to *common.Address,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address,
 ) (Result, error) {
-	return getData(addresses, rpc, to, "getCodeLengths(address[])", []string{"uint256[]"})
+	return getData(addresses, client, to, "getCodeLengths(address[])", []string{"uint256[]"})
 }
 
 func getBalances(
-	addresses []*common.Address, rpc string, to *common.Address,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address,
 ) (Result, error) {
-	return getData(addresses, rpc, to, "getBalances(address[])", []string{"uint256[]"})
+	return getData(addresses, client, to, "getBalances(address[])", []string{"uint256[]"})
 }
 
 func getAddressesData(
-	addresses []*common.Address, rpc string, to *common.Address,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address,
 ) (Result, error) {
-	return getData(addresses, rpc, to, "getAddressesData(address[])", []string{"uint256[]", "uint256[]"})
+	return getData(addresses, client, to, "getAddressesData(address[])", []string{"uint256[]", "uint256[]"})
 }
 
 func getData(
-	addresses []*common.Address, rpc string, to *common.Address, funcSignature string, returnTypes []string,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address, funcSignature string, returnTypes []string,
 ) (Result, error) {
 
 	callData, err := abi.EncodeWithSignature(funcSignature, toAnyArray(addresses))
@@ -276,7 +264,7 @@ func getData(
 		return Result{}, err
 	}
 
-	encodedCallResult, err := readContract(rpc, &ZERO_ADDRESS, to, callData)
+	encodedCallResult, err := readContract(client, &ZERO_ADDRESS, to, callData)
 	if err != nil {
 		return Result{}, err
 	}
@@ -290,13 +278,13 @@ func getData(
 }
 
 func makeCall(
-	calls CallsInterface, rpc string, to *common.Address, callData []byte, txReturnTypes []string,
+	calls CallsInterface, client *ethclient.Client, to *common.Address, callData []byte, txReturnTypes []string,
 	isSimulation bool, multiCallType *MultiCallType, writeAddress *common.Address,
 ) ([]any, []any, error) {
 	if !true {
 		log.Println(writeAddress)
 	}
-	encodedCallResult, err := readContract(rpc, &ZERO_ADDRESS, to, callData)
+	encodedCallResult, err := readContract(client, &ZERO_ADDRESS, to, callData)
 	if err != nil && !isSimulation {
 		return nil, nil, err
 	} else if isSimulation {

@@ -17,13 +17,7 @@ import (
 )
 
 // readContract makes a call to a contract and returns the returned bytecode.
-func readContract(rpc string, from, to *common.Address, encodedCall []byte) ([]byte, error) {
-	client, err := ethclient.Dial(rpc)
-	if err != nil {
-		return []byte{}, fmt.Errorf("error establishing RPC connection: %v", err)
-	}
-	defer client.Close()
-
+func readContract(client *ethclient.Client, from, to *common.Address, encodedCall []byte) ([]byte, error) {
 	if from == nil {
 		from = &ZERO_ADDRESS
 	}
@@ -45,19 +39,12 @@ func readContract(rpc string, from, to *common.Address, encodedCall []byte) ([]b
 
 // createTransaction creates a new transaction object.
 func createTransaction(
-	rpc string,
+	client *ethclient.Client,
 	from *common.Address,
 	to *common.Address,
 	msgValue *big.Int,
 	callData []byte,
 ) (*types.Transaction, error) {
-
-	client, err := ethclient.Dial(rpc)
-	if err != nil {
-		return nil, fmt.Errorf("error establishing RPC connection: %v", err)
-	}
-	defer client.Close()
-
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
 		return nil, err
@@ -90,14 +77,8 @@ func createTransaction(
 }
 
 // sendSignedTransaction sends a signed transaction
-func sendSignedTransaction(rpc string, tx *types.Transaction) (*types.Receipt, error) {
-	client, err := ethclient.Dial(rpc)
-	if err != nil {
-		return nil, fmt.Errorf("error establishing RPC connection: %v", err)
-	}
-	defer client.Close()
-
-	err = client.SendTransaction(context.Background(), tx)
+func sendSignedTransaction(client *ethclient.Client, tx *types.Transaction) (*types.Receipt, error) {
+	err := client.SendTransaction(context.Background(), tx)
 	if err != nil {
 		return nil, fmt.Errorf("error sending transaction (txHash=%v): %v", tx.Hash(), err)
 	}

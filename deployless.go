@@ -28,13 +28,13 @@ type CallsWithRequireSuccess struct {
 	RequireSuccess bool
 }
 
-func deploylessSimulation(calls Calls, rpc string) (Result, error) {
+func deploylessSimulation(calls Calls, client *ethclient.Client) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(true, false)
 	if err != nil {
 		return Result{}, err
 	}
 
-	_, err = makeDeploylessCall(arrayfiedCalls, false, SIMULATION, rpc, []string{"(address,bytes,uint256)[]"})
+	_, err = makeDeploylessCall(arrayfiedCalls, false, SIMULATION, client, []string{"(address,bytes,uint256)[]"})
 	if err != nil {
 		if strings.Contains(err.Error(), "execution reverted") {
 			encodedRevert, ok := parseRevertData(err)
@@ -64,13 +64,13 @@ func deploylessSimulation(calls Calls, rpc string) (Result, error) {
 	return Result{Success: false, Error: fmt.Errorf("call did not revert")}, nil
 }
 
-func deploylessAggregateStatic(calls Calls, rpc string) (Result, error) {
+func deploylessAggregateStatic(calls Calls, client *ethclient.Client) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
 		return Result{}, err
 	}
 
-	rawResponse, err := makeDeploylessCall(arrayfiedCalls, false, STATIC_CALL, rpc, []string{"(address,bytes)[]"})
+	rawResponse, err := makeDeploylessCall(arrayfiedCalls, false, STATIC_CALL, client, []string{"(address,bytes)[]"})
 	if err != nil {
 		return Result{}, err
 	}
@@ -94,14 +94,14 @@ func deploylessAggregateStatic(calls Calls, rpc string) (Result, error) {
 	return Result{Success: true, Result: result}, nil
 }
 
-func deploylessTryAggregateStatic(calls Calls, requireSuccess bool, rpc string) (Result, error) {
+func deploylessTryAggregateStatic(calls Calls, requireSuccess bool, client *ethclient.Client) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
 		return Result{}, err
 	}
 
 	rawResponse, err := makeDeploylessCall(
-		arrayfiedCalls, requireSuccess, TRY_STATIC_CALL, rpc, []string{"(address,bytes)[]", "bool"},
+		arrayfiedCalls, requireSuccess, TRY_STATIC_CALL, client, []string{"(address,bytes)[]", "bool"},
 	)
 	if err != nil {
 		return Result{}, err
@@ -126,14 +126,14 @@ func deploylessTryAggregateStatic(calls Calls, requireSuccess bool, rpc string) 
 	return Result{Success: true, Result: result}, nil
 }
 
-func deploylessTryAggregateStatic3(calls CallsWithFailure, rpc string) (Result, error) {
+func deploylessTryAggregateStatic3(calls CallsWithFailure, client *ethclient.Client) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
 		return Result{}, err
 	}
 
 	rawResponse, err := makeDeploylessCall(
-		arrayfiedCalls, false, TRY_STATIC_CALL2, rpc, []string{"(address,bytes,bool)[]"},
+		arrayfiedCalls, false, TRY_STATIC_CALL2, client, []string{"(address,bytes,bool)[]"},
 	)
 	if err != nil {
 		return Result{}, err
@@ -158,10 +158,10 @@ func deploylessTryAggregateStatic3(calls CallsWithFailure, rpc string) (Result, 
 	return Result{Success: true, Result: result}, nil
 }
 
-func deploylessGetCodeLengths(addresses []*common.Address, rpc string) (Result, error) {
+func deploylessGetCodeLengths(addresses []*common.Address, client *ethclient.Client) (Result, error) {
 
 	rawResponse, err := makeDeploylessCall(
-		toAnyArray(addresses), false, CODE_LENGTH, rpc, []string{"address[]"},
+		toAnyArray(addresses), false, CODE_LENGTH, client, []string{"address[]"},
 	)
 	if err != nil {
 		return Result{}, err
@@ -176,10 +176,10 @@ func deploylessGetCodeLengths(addresses []*common.Address, rpc string) (Result, 
 	return Result{Success: true, Result: resultArgs}, nil
 }
 
-func deploylessGetBalances(addresses []*common.Address, rpc string) (Result, error) {
+func deploylessGetBalances(addresses []*common.Address, client *ethclient.Client) (Result, error) {
 
 	rawResponse, err := makeDeploylessCall(
-		toAnyArray(addresses), false, BALANCES, rpc, []string{"address[]"},
+		toAnyArray(addresses), false, BALANCES, client, []string{"address[]"},
 	)
 	if err != nil {
 		return Result{}, err
@@ -194,10 +194,10 @@ func deploylessGetBalances(addresses []*common.Address, rpc string) (Result, err
 	return Result{Success: true, Result: resultArgs}, nil
 }
 
-func deploylessGetAddressesData(addresses []*common.Address, rpc string) (Result, error) {
+func deploylessGetAddressesData(addresses []*common.Address, client *ethclient.Client) (Result, error) {
 
 	rawResponse, err := makeDeploylessCall(
-		toAnyArray(addresses), false, ADDRESSES_DATA, rpc, []string{"address[]"},
+		toAnyArray(addresses), false, ADDRESSES_DATA, client, []string{"address[]"},
 	)
 	if err != nil {
 		return Result{}, err
@@ -217,15 +217,10 @@ func deploylessGetAddressesData(addresses []*common.Address, rpc string) (Result
 }
 
 func makeDeploylessCall(
-	params []any, requireSuccess bool, callType CallType, rpc string, typeStrs []string,
+	params []any, requireSuccess bool, callType CallType, client *ethclient.Client, typeStrs []string,
 ) (string, error) {
-	client, err := ethclient.Dial(rpc)
-	if err != nil {
-		return "", err
-	}
-	defer client.Close()
-
 	var encoded []byte
+	var err error
 	if callType == TRY_STATIC_CALL {
 		encoded, err = abi.Encode(typeStrs, params, requireSuccess)
 	} else {

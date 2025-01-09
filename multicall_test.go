@@ -5,25 +5,36 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/omnes-tech/multicall"
 )
 
 func ExampleNewClient() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("RPC: %s MultiCallType: %d WriteAddress: %s ReadAddress: %s",
-		client.RPC, client.MultiCallType, client.WriteAddress, client.ReadAddress)
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
+	if err != nil {
+		panic(err)
+	}
 
-	// Output: RPC: https://eth.llamarpc.com MultiCallType: 0 WriteAddress: 0xcA11bde05977b3631167028862bE2a173976CA11 ReadAddress: <nil>
+	fmt.Printf("MultiCallType: %d WriteAddress: %s ReadAddress: %s",
+		mcall.MultiCallType, mcall.WriteAddress, mcall.ReadAddress)
+
+	// Output: MultiCallType: 0 WriteAddress: 0xcA11bde05977b3631167028862bE2a173976CA11 ReadAddress: <nil>
 }
 
-func ExampleMultiCallClient_SimulateCall() {
+func ExampleMultiCall_SimulateCall() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -43,16 +54,21 @@ func ExampleMultiCallClient_SimulateCall() {
 
 	calls := multicall.NewCalls(targets, funcSigs, nil, nil, values)
 
-	results, err := client.SimulateCall(calls)
+	results, err := mcall.SimulateCall(calls, client)
 
 	fmt.Println(results)
 
 	// Output: {true [[true  33921] [true  9521]] <nil>}
 }
 
-func ExampleMultiCallClient_AggregateStatic() {
+func ExampleMultiCall_AggregateStatic() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +94,7 @@ func ExampleMultiCallClient_AggregateStatic() {
 
 	calls := multicall.NewCalls(targets, funcSigs, argss, returnTypes, nil)
 
-	results, err := client.AggregateStatic(calls)
+	results, err := mcall.AggregateStatic(calls, client)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -88,9 +104,14 @@ func ExampleMultiCallClient_AggregateStatic() {
 	// Output: {true [[1085420955917931147422] [1085420955917931147422]] <nil>}
 }
 
-func ExampleMultiCallClient_TryAggregateStatic() {
+func ExampleMultiCall_TryAggregateStatic() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -116,7 +137,7 @@ func ExampleMultiCallClient_TryAggregateStatic() {
 
 	calls := multicall.NewCalls(targets, funcSigs, argss, returnTypes, nil)
 
-	results, err := client.TryAggregateStatic(calls, true)
+	results, err := mcall.TryAggregateStatic(calls, true, client)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -126,9 +147,14 @@ func ExampleMultiCallClient_TryAggregateStatic() {
 	// Output: {true [[true [1085420955917931147422]] [true [1085420955917931147422]]] <nil>}
 }
 
-func ExampleMultiCallClient_TryAggregateStatic3() {
+func ExampleMultiCall_TryAggregateStatic3() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -155,7 +181,7 @@ func ExampleMultiCallClient_TryAggregateStatic3() {
 
 	calls := multicall.NewCallsWithFailure(targets, funcSigs, argss, returnTypes, nil, requireSuccess)
 
-	results, err := client.TryAggregateStatic3(calls)
+	results, err := mcall.TryAggregateStatic3(calls, client)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -165,9 +191,14 @@ func ExampleMultiCallClient_TryAggregateStatic3() {
 	// Output: {true [[true [1085420955917931147422]] [true [1085420955917931147422]]] <nil>}
 }
 
-func ExampleMultiCallClient_CodeLengths() {
+func ExampleMultiCall_CodeLengths() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -179,7 +210,7 @@ func ExampleMultiCallClient_CodeLengths() {
 		&address,
 	}
 
-	results, err := client.CodeLengths(targets)
+	results, err := mcall.CodeLengths(targets, client)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -189,9 +220,14 @@ func ExampleMultiCallClient_CodeLengths() {
 	// Output: {true [3124 3124] <nil>}
 }
 
-func ExampleMultiCallClient_Balances() {
+func ExampleMultiCall_Balances() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -203,19 +239,22 @@ func ExampleMultiCallClient_Balances() {
 		&address,
 	}
 
-	results, err := client.Balances(targets)
+	results, err := mcall.Balances(targets, client)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	fmt.Println(results)
-
-	// Output: {true [2990859034749149558049965 2990859034749149558049965] <nil>}
 }
 
-func ExampleMultiCallClient_AddressesData() {
+func ExampleMultiCall_AddressesData() {
 	rpc := "https://eth.llamarpc.com"
-	client, err := multicall.NewClient(multicall.GENERAL, rpc, nil)
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -227,12 +266,10 @@ func ExampleMultiCallClient_AddressesData() {
 		&address,
 	}
 
-	results, err := client.AddressesData(targets)
+	results, err := mcall.AddressesData(targets, client)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	fmt.Println(results)
-
-	// Output: {true [[2990903258548144038500852 3124] [2990903258548144038500852 3124]] <nil>}
 }
