@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -106,7 +107,9 @@ func NewMultiCall(multiCallType MultiCallType, client *ethclient.Client, signer 
 	}
 }
 
-func (m *MultiCall) AggregateCalls(calls []Call, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) AggregateCalls(
+	calls []Call, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 	if m.Signer == nil {
 		return Result{}, fmt.Errorf("no signer configured")
 	}
@@ -136,7 +139,9 @@ func (m *MultiCall) AggregateCalls(calls []Call, client *ethclient.Client) (Resu
 	}
 }
 
-func (m *MultiCall) TryAggregateCalls(calls []Call, requireSuccess bool, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) TryAggregateCalls(
+	calls []Call, requireSuccess bool, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 	if m.Signer == nil {
 		return Result{}, fmt.Errorf("no signer configured")
 	}
@@ -160,7 +165,9 @@ func (m *MultiCall) TryAggregateCalls(calls []Call, requireSuccess bool, client 
 	}
 }
 
-func (m *MultiCall) TryAggregateCalls3(calls []CallWithFailure, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) TryAggregateCalls3(
+	calls []CallWithFailure, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 	if m.Signer == nil {
 		return Result{}, fmt.Errorf("no signer configured")
 	}
@@ -194,10 +201,12 @@ func (m *MultiCall) TryAggregateCalls3(calls []CallWithFailure, client *ethclien
 	}
 }
 
-func (m *MultiCall) SimulateCall(calls []Call, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) SimulateCall(
+	calls []Call, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	if m.MultiCallType == GENERAL {
-		return deploylessSimulation(calls, client)
+		return deploylessSimulation(calls, client, blockNumber)
 	} else if m.MultiCallType == OMNES {
 		return aggregateStatic(
 			calls,
@@ -208,16 +217,19 @@ func (m *MultiCall) SimulateCall(calls []Call, client *ethclient.Client) (Result
 			true,
 			&m.MultiCallType,
 			m.WriteAddress,
+			blockNumber,
 		)
 	} else {
-		return deploylessSimulation(calls, client)
+		return deploylessSimulation(calls, client, blockNumber)
 	}
 }
 
-func (m *MultiCall) AggregateStatic(calls []Call, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) AggregateStatic(
+	calls []Call, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	if m.MultiCallType == GENERAL {
-		return deploylessAggregateStatic(calls, client)
+		return deploylessAggregateStatic(calls, client, blockNumber)
 	} else if m.MultiCallType == OMNES {
 		return aggregateStatic(
 			calls,
@@ -228,16 +240,19 @@ func (m *MultiCall) AggregateStatic(calls []Call, client *ethclient.Client) (Res
 			false,
 			&m.MultiCallType,
 			m.WriteAddress,
+			blockNumber,
 		)
 	} else {
-		return deploylessAggregateStatic(calls, client)
+		return deploylessAggregateStatic(calls, client, blockNumber)
 	}
 }
 
-func (m *MultiCall) TryAggregateStatic(calls []Call, requireSuccess bool, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) TryAggregateStatic(
+	calls []Call, requireSuccess bool, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	if m.MultiCallType == GENERAL {
-		return deploylessTryAggregateStatic(calls, requireSuccess, client)
+		return deploylessTryAggregateStatic(calls, requireSuccess, client, blockNumber)
 	} else if m.MultiCallType == OMNES {
 		return tryAggregateStatic(
 			calls,
@@ -248,16 +263,19 @@ func (m *MultiCall) TryAggregateStatic(calls []Call, requireSuccess bool, client
 			[]string{"bytes[]"},
 			&m.MultiCallType,
 			m.WriteAddress,
+			blockNumber,
 		)
 	} else {
-		return deploylessTryAggregateStatic(calls, requireSuccess, client)
+		return deploylessTryAggregateStatic(calls, requireSuccess, client, blockNumber)
 	}
 }
 
-func (m *MultiCall) TryAggregateStatic3(calls []CallWithFailure, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) TryAggregateStatic3(
+	calls []CallWithFailure, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	if m.MultiCallType == GENERAL {
-		return deploylessTryAggregateStatic3(calls, client)
+		return deploylessTryAggregateStatic3(calls, client, blockNumber)
 	} else if m.MultiCallType == OMNES {
 		return tryAggregateStatic3(
 			calls,
@@ -267,42 +285,60 @@ func (m *MultiCall) TryAggregateStatic3(calls []CallWithFailure, client *ethclie
 			[]string{"bytes[]"},
 			&m.MultiCallType,
 			m.WriteAddress,
+			blockNumber,
 		)
 	} else {
-		return deploylessTryAggregateStatic3(calls, client)
+		return deploylessTryAggregateStatic3(calls, client, blockNumber)
 	}
 }
 
-func (m *MultiCall) CodeLengths(addresses []*common.Address, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) CodeLengths(
+	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	if m.MultiCallType == GENERAL {
-		return deploylessGetCodeLengths(addresses, client)
+		return deploylessGetCodeLengths(addresses, client, blockNumber)
 	} else if m.MultiCallType == OMNES {
-		return getCodeLengths(addresses, client, m.ReadAddress)
+		return getCodeLengths(addresses, client, m.ReadAddress, blockNumber)
 	} else {
-		return deploylessGetCodeLengths(addresses, client)
+		return deploylessGetCodeLengths(addresses, client, blockNumber)
 	}
 }
 
-func (m *MultiCall) Balances(addresses []*common.Address, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) Balances(
+	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	if m.MultiCallType == GENERAL {
-		return deploylessGetBalances(addresses, client)
+		return deploylessGetBalances(addresses, client, blockNumber)
 	} else if m.MultiCallType == OMNES {
-		return getBalances(addresses, client, m.ReadAddress)
+		return getBalances(addresses, client, m.ReadAddress, blockNumber)
 	} else {
-		return deploylessGetBalances(addresses, client)
+		return deploylessGetBalances(addresses, client, blockNumber)
 	}
 }
 
-func (m *MultiCall) AddressesData(addresses []*common.Address, client *ethclient.Client) (Result, error) {
+func (m *MultiCall) AddressesData(
+	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	if m.MultiCallType == GENERAL {
-		return deploylessGetAddressesData(addresses, client)
+		return deploylessGetAddressesData(addresses, client, blockNumber)
 	} else if m.MultiCallType == OMNES {
-		return getAddressesData(addresses, client, m.ReadAddress)
+		return getAddressesData(addresses, client, m.ReadAddress, blockNumber)
 	} else {
-		return deploylessGetAddressesData(addresses, client)
+		return deploylessGetAddressesData(addresses, client, blockNumber)
+	}
+}
+
+func (m *MultiCall) ChainData(client *ethclient.Client, blockNumber *big.Int) (Result, error) {
+
+	if m.MultiCallType == GENERAL {
+		return deploylessGetChainData(client, blockNumber)
+	} else if m.MultiCallType == OMNES {
+		return getChainData(client, m.ReadAddress, blockNumber)
+	} else {
+		return deploylessGetChainData(client, blockNumber)
 	}
 }
 

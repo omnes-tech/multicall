@@ -17,7 +17,9 @@ import (
 )
 
 // readContract makes a call to a contract and returns the returned bytecode.
-func readContract(client *ethclient.Client, from, to *common.Address, encodedCall []byte) ([]byte, error) {
+func readContract(
+	client *ethclient.Client, from, to *common.Address, encodedCall []byte, blockNumber *big.Int,
+) ([]byte, error) {
 	if from == nil {
 		from = &ZERO_ADDRESS
 	}
@@ -28,7 +30,7 @@ func readContract(client *ethclient.Client, from, to *common.Address, encodedCal
 			To:   to,
 			Data: encodedCall,
 		},
-		nil,
+		blockNumber,
 	)
 	if err != nil {
 		return nil, err

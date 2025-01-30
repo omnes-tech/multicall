@@ -54,7 +54,7 @@ func ExampleMultiCall_SimulateCall() {
 
 	calls := multicall.NewCalls(targets, funcSigs, nil, nil, values)
 
-	results, err := mcall.SimulateCall(calls, client)
+	results, err := mcall.SimulateCall(calls, client, nil)
 
 	fmt.Println(results)
 
@@ -94,7 +94,7 @@ func ExampleMultiCall_AggregateStatic() {
 
 	calls := multicall.NewCalls(targets, funcSigs, argss, returnTypes, nil)
 
-	results, err := mcall.AggregateStatic(calls, client)
+	results, err := mcall.AggregateStatic(calls, client, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -137,7 +137,7 @@ func ExampleMultiCall_TryAggregateStatic() {
 
 	calls := multicall.NewCalls(targets, funcSigs, argss, returnTypes, nil)
 
-	results, err := mcall.TryAggregateStatic(calls, true, client)
+	results, err := mcall.TryAggregateStatic(calls, true, client, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -181,7 +181,7 @@ func ExampleMultiCall_TryAggregateStatic3() {
 
 	calls := multicall.NewCallsWithFailure(targets, funcSigs, argss, returnTypes, nil, requireSuccess)
 
-	results, err := mcall.TryAggregateStatic3(calls, client)
+	results, err := mcall.TryAggregateStatic3(calls, client, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -210,7 +210,7 @@ func ExampleMultiCall_CodeLengths() {
 		&address,
 	}
 
-	results, err := mcall.CodeLengths(targets, client)
+	results, err := mcall.CodeLengths(targets, client, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -239,7 +239,7 @@ func ExampleMultiCall_Balances() {
 		&address,
 	}
 
-	results, err := mcall.Balances(targets, client)
+	results, err := mcall.Balances(targets, client, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -266,7 +266,27 @@ func ExampleMultiCall_AddressesData() {
 		&address,
 	}
 
-	results, err := mcall.AddressesData(targets, client)
+	results, err := mcall.AddressesData(targets, client, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println(results)
+}
+
+func ExampleMultiCall_ChainData() {
+	rpc := "https://eth.llamarpc.com"
+	client, err := ethclient.Dial(rpc)
+	if err != nil {
+		panic(err)
+	}
+
+	mcall, err := multicall.NewMultiCall(multicall.GENERAL, client, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	results, err := mcall.ChainData(client, nil)
 	if err != nil {
 		fmt.Println(err)
 	}

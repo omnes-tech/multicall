@@ -21,7 +21,9 @@ func aggregate(
 		return Result{}, err
 	}
 
-	receipt, decodedCallResult, err := aggregateTx(arrayfiedCalls, msgValue, client, signer, to, funcSignature, txReturnTypes)
+	receipt, decodedCallResult, err := aggregateTx(
+		arrayfiedCalls, msgValue, client, signer, to, funcSignature, txReturnTypes,
+	)
 	if err != nil {
 		return Result{}, err
 	}
@@ -89,7 +91,9 @@ func tryAggregate3(
 		return Result{}, err
 	}
 
-	receipt, decodedCallResult, err := aggregateTx(arrayfiedCalls, msgValue, client, signer, to, funcSignature, txReturnTypes)
+	receipt, decodedCallResult, err := aggregateTx(
+		arrayfiedCalls, msgValue, client, signer, to, funcSignature, txReturnTypes,
+	)
 	if err != nil {
 		return Result{}, err
 	}
@@ -146,7 +150,7 @@ func aggregateTx(
 
 func aggregateStatic(
 	calls Calls, client *ethclient.Client, to *common.Address, funcSignature string, txReturnTypes []string,
-	isSimulation bool, multiCallType *MultiCallType, writeAddress *common.Address,
+	isSimulation bool, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
 ) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
@@ -167,6 +171,7 @@ func aggregateStatic(
 		isSimulation,
 		multiCallType,
 		writeAddress,
+		blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -177,7 +182,7 @@ func aggregateStatic(
 
 func tryAggregateStatic(
 	calls Calls, requireSuccess bool, client *ethclient.Client, to *common.Address, funcSignature string,
-	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address,
+	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
 ) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
@@ -198,6 +203,7 @@ func tryAggregateStatic(
 		false,
 		multiCallType,
 		writeAddress,
+		blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -208,7 +214,7 @@ func tryAggregateStatic(
 
 func tryAggregateStatic3(
 	calls CallsWithFailure, client *ethclient.Client, to *common.Address, funcSignature string,
-	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address,
+	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
 ) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
@@ -229,6 +235,7 @@ func tryAggregateStatic3(
 		false,
 		multiCallType,
 		writeAddress,
+		blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -238,33 +245,69 @@ func tryAggregateStatic3(
 }
 
 func getCodeLengths(
-	addresses []*common.Address, client *ethclient.Client, to *common.Address,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address, blockNumber *big.Int,
 ) (Result, error) {
-	return getData(addresses, client, to, "getCodeLengths(address[])", []string{"uint256[]"})
+	return getData(
+		addresses, client, to, "getCodeLengths(address[])", []string{"uint256[]"}, blockNumber,
+	)
 }
 
 func getBalances(
-	addresses []*common.Address, client *ethclient.Client, to *common.Address,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address, blockNumber *big.Int,
 ) (Result, error) {
-	return getData(addresses, client, to, "getBalances(address[])", []string{"uint256[]"})
+	return getData(
+		addresses, client, to, "getBalances(address[])", []string{"uint256[]"}, blockNumber,
+	)
 }
 
 func getAddressesData(
-	addresses []*common.Address, client *ethclient.Client, to *common.Address,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address, blockNumber *big.Int,
 ) (Result, error) {
-	return getData(addresses, client, to, "getAddressesData(address[])", []string{"uint256[]", "uint256[]"})
+	return getData(
+		addresses,
+		client,
+		to,
+		"getAddressesData(address[])",
+		[]string{"uint256[]", "uint256[]"},
+		blockNumber,
+	)
+}
+
+func getChainData(
+	client *ethclient.Client, to *common.Address, blockNumber *big.Int,
+) (Result, error) {
+	return getData(nil, client, to, "getChainData()", []string{
+		"uint256",
+		"uint256",
+		"bytes32",
+		"uint256",
+		"address",
+		"uint256",
+		"uint256",
+		"uint256",
+		"uint256",
+	},
+		blockNumber,
+	)
 }
 
 func getData(
-	addresses []*common.Address, client *ethclient.Client, to *common.Address, funcSignature string, returnTypes []string,
+	addresses []*common.Address, client *ethclient.Client, to *common.Address,
+	funcSignature string, returnTypes []string, blockNumber *big.Int,
 ) (Result, error) {
 
-	callData, err := abi.EncodeWithSignature(funcSignature, toAnyArray(addresses))
+	var callData []byte
+	var err error
+	if addresses != nil {
+		callData, err = abi.EncodeWithSignature(funcSignature, toAnyArray(addresses))
+	} else {
+		callData, err = abi.EncodeWithSignature(funcSignature)
+	}
 	if err != nil {
 		return Result{}, err
 	}
 
-	encodedCallResult, err := readContract(client, &ZERO_ADDRESS, to, callData)
+	encodedCallResult, err := readContract(client, &ZERO_ADDRESS, to, callData, blockNumber)
 	if err != nil {
 		return Result{}, err
 	}
@@ -279,12 +322,12 @@ func getData(
 
 func makeCall(
 	calls CallsInterface, client *ethclient.Client, to *common.Address, callData []byte, txReturnTypes []string,
-	isSimulation bool, multiCallType *MultiCallType, writeAddress *common.Address,
+	isSimulation bool, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
 ) ([]any, []any, error) {
 	if !true {
 		log.Println(writeAddress)
 	}
-	encodedCallResult, err := readContract(client, &ZERO_ADDRESS, to, callData)
+	encodedCallResult, err := readContract(client, &ZERO_ADDRESS, to, callData, blockNumber)
 	if err != nil && !isSimulation {
 		return nil, nil, err
 	} else if isSimulation {
@@ -308,7 +351,9 @@ func makeCall(
 	return decodedCallResult, decodedAggregatedCallsResultVar, nil
 }
 
-func parseResults(calls CallsInterface, decodedCallResult []any, status bool, callOrTxResult any) (Result, error) {
+func parseResults(
+	calls CallsInterface, decodedCallResult []any, status bool, callOrTxResult any,
+) (Result, error) {
 	decodedAggregatedCallsResultVar, err := decodeAggregateCallsResult(decodedCallResult, calls)
 	if err != nil {
 		return Result{}, err

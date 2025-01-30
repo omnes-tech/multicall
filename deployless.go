@@ -21,6 +21,7 @@ const (
 	CODE_LENGTH
 	BALANCES
 	ADDRESSES_DATA
+	CHAIN_DATA
 )
 
 type CallsWithRequireSuccess struct {
@@ -28,13 +29,20 @@ type CallsWithRequireSuccess struct {
 	RequireSuccess bool
 }
 
-func deploylessSimulation(calls Calls, client *ethclient.Client) (Result, error) {
+func deploylessSimulation(calls Calls, client *ethclient.Client, blockNumber *big.Int) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(true, false)
 	if err != nil {
 		return Result{}, err
 	}
 
-	_, err = makeDeploylessCall(arrayfiedCalls, false, SIMULATION, client, []string{"(address,bytes,uint256)[]"})
+	_, err = makeDeploylessCall(
+		arrayfiedCalls,
+		false,
+		SIMULATION,
+		client,
+		[]string{"(address,bytes,uint256)[]"},
+		blockNumber,
+	)
 	if err != nil {
 		if strings.Contains(err.Error(), "execution reverted") {
 			encodedRevert, ok := parseRevertData(err)
@@ -64,13 +72,20 @@ func deploylessSimulation(calls Calls, client *ethclient.Client) (Result, error)
 	return Result{Success: false, Error: fmt.Errorf("call did not revert")}, nil
 }
 
-func deploylessAggregateStatic(calls Calls, client *ethclient.Client) (Result, error) {
+func deploylessAggregateStatic(calls Calls, client *ethclient.Client, blockNumber *big.Int) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
 		return Result{}, err
 	}
 
-	rawResponse, err := makeDeploylessCall(arrayfiedCalls, false, STATIC_CALL, client, []string{"(address,bytes)[]"})
+	rawResponse, err := makeDeploylessCall(
+		arrayfiedCalls,
+		false,
+		STATIC_CALL,
+		client,
+		[]string{"(address,bytes)[]"},
+		blockNumber,
+	)
 	if err != nil {
 		return Result{}, err
 	}
@@ -94,14 +109,21 @@ func deploylessAggregateStatic(calls Calls, client *ethclient.Client) (Result, e
 	return Result{Success: true, Result: result}, nil
 }
 
-func deploylessTryAggregateStatic(calls Calls, requireSuccess bool, client *ethclient.Client) (Result, error) {
+func deploylessTryAggregateStatic(
+	calls Calls, requireSuccess bool, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
 		return Result{}, err
 	}
 
 	rawResponse, err := makeDeploylessCall(
-		arrayfiedCalls, requireSuccess, TRY_STATIC_CALL, client, []string{"(address,bytes)[]", "bool"},
+		arrayfiedCalls,
+		requireSuccess,
+		TRY_STATIC_CALL,
+		client,
+		[]string{"(address,bytes)[]", "bool"},
+		blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -126,14 +148,21 @@ func deploylessTryAggregateStatic(calls Calls, requireSuccess bool, client *ethc
 	return Result{Success: true, Result: result}, nil
 }
 
-func deploylessTryAggregateStatic3(calls CallsWithFailure, client *ethclient.Client) (Result, error) {
+func deploylessTryAggregateStatic3(
+	calls CallsWithFailure, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
 		return Result{}, err
 	}
 
 	rawResponse, err := makeDeploylessCall(
-		arrayfiedCalls, false, TRY_STATIC_CALL2, client, []string{"(address,bytes,bool)[]"},
+		arrayfiedCalls,
+		false,
+		TRY_STATIC_CALL2,
+		client,
+		[]string{"(address,bytes,bool)[]"},
+		blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -158,10 +187,12 @@ func deploylessTryAggregateStatic3(calls CallsWithFailure, client *ethclient.Cli
 	return Result{Success: true, Result: result}, nil
 }
 
-func deploylessGetCodeLengths(addresses []*common.Address, client *ethclient.Client) (Result, error) {
+func deploylessGetCodeLengths(
+	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	rawResponse, err := makeDeploylessCall(
-		toAnyArray(addresses), false, CODE_LENGTH, client, []string{"address[]"},
+		toAnyArray(addresses), false, CODE_LENGTH, client, []string{"address[]"}, blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -176,10 +207,12 @@ func deploylessGetCodeLengths(addresses []*common.Address, client *ethclient.Cli
 	return Result{Success: true, Result: resultArgs}, nil
 }
 
-func deploylessGetBalances(addresses []*common.Address, client *ethclient.Client) (Result, error) {
+func deploylessGetBalances(
+	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	rawResponse, err := makeDeploylessCall(
-		toAnyArray(addresses), false, BALANCES, client, []string{"address[]"},
+		toAnyArray(addresses), false, BALANCES, client, []string{"address[]"}, blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -194,10 +227,12 @@ func deploylessGetBalances(addresses []*common.Address, client *ethclient.Client
 	return Result{Success: true, Result: resultArgs}, nil
 }
 
-func deploylessGetAddressesData(addresses []*common.Address, client *ethclient.Client) (Result, error) {
+func deploylessGetAddressesData(
+	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
+) (Result, error) {
 
 	rawResponse, err := makeDeploylessCall(
-		toAnyArray(addresses), false, ADDRESSES_DATA, client, []string{"address[]"},
+		toAnyArray(addresses), false, ADDRESSES_DATA, client, []string{"address[]"}, blockNumber,
 	)
 	if err != nil {
 		return Result{}, err
@@ -216,14 +251,45 @@ func deploylessGetAddressesData(addresses []*common.Address, client *ethclient.C
 	return Result{Success: true, Result: result}, nil
 }
 
+func deploylessGetChainData(client *ethclient.Client, blockNumber *big.Int) (Result, error) {
+
+	rawResponse, err := makeDeploylessCall(
+		nil, false, CHAIN_DATA, client, nil, blockNumber,
+	)
+	if err != nil {
+		return Result{}, err
+	}
+
+	resultArgs, err := abi.Decode(
+		[]string{
+			"uint256",
+			"uint256",
+			"bytes32",
+			"uint256",
+			"address",
+			"uint256",
+			"uint256",
+			"uint256",
+			"uint256",
+		},
+		common.Hex2Bytes(rawResponse[2:]),
+	)
+	if err != nil {
+		return Result{}, err
+	}
+
+	return Result{Success: true, Result: resultArgs}, nil
+}
+
 func makeDeploylessCall(
-	params []any, requireSuccess bool, callType CallType, client *ethclient.Client, typeStrs []string,
+	params []any, requireSuccess bool, callType CallType,
+	client *ethclient.Client, typeStrs []string, blockNumber *big.Int,
 ) (string, error) {
 	var encoded []byte
 	var err error
 	if callType == TRY_STATIC_CALL {
 		encoded, err = abi.Encode(typeStrs, params, requireSuccess)
-	} else {
+	} else if typeStrs != nil && params != nil {
 		encoded, err = abi.Encode(typeStrs, params)
 	}
 	if err != nil {
@@ -242,11 +308,18 @@ func makeDeploylessCall(
 
 	data := DEPLOYLESS_MULTICALL_BYTECODE + common.Bytes2Hex(encodedParamsToDeploy)
 
+	var blockNumberStr string
+	if blockNumber != nil {
+		blockNumberStr = blockNumber.String()
+	} else {
+		blockNumberStr = "latest"
+	}
+
 	var rawResponse string
 	err = client.Client().CallContext(context.Background(), &rawResponse, "eth_call", map[string]interface{}{
 		"to":   nil, // This is a deployless call, so `to` is `nil`
 		"data": data,
-	}, "latest")
+	}, blockNumberStr)
 	if err != nil {
 		return rawResponse, err
 	}
