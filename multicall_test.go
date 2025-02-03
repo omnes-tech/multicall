@@ -52,7 +52,7 @@ func ExampleMultiCall_SimulateCall() {
 		big.NewInt(1000000000000000000),
 	}
 
-	calls := multicall.NewCalls(targets, funcSigs, nil, nil, values)
+	calls := multicall.NewCalls(targets, funcSigs, nil, nil, nil, values)
 
 	results, err := mcall.SimulateCall(calls, client, nil)
 
@@ -92,7 +92,7 @@ func ExampleMultiCall_AggregateStatic() {
 		{"uint256"},
 	}
 
-	calls := multicall.NewCalls(targets, funcSigs, argss, returnTypes, nil)
+	calls := multicall.NewCalls(targets, funcSigs, argss, nil, returnTypes, nil)
 
 	results, err := mcall.AggregateStatic(calls, client, nil)
 	if err != nil {
@@ -135,7 +135,7 @@ func ExampleMultiCall_TryAggregateStatic() {
 		{"uint256"},
 	}
 
-	calls := multicall.NewCalls(targets, funcSigs, argss, returnTypes, nil)
+	calls := multicall.NewCalls(targets, funcSigs, argss, nil, returnTypes, nil)
 
 	results, err := mcall.TryAggregateStatic(calls, true, client, nil)
 	if err != nil {
@@ -179,7 +179,7 @@ func ExampleMultiCall_TryAggregateStatic3() {
 	}
 	requireSuccess := []bool{true, true}
 
-	calls := multicall.NewCallsWithFailure(targets, funcSigs, argss, returnTypes, nil, requireSuccess)
+	calls := multicall.NewCallsWithFailure(targets, funcSigs, argss, nil, returnTypes, nil, requireSuccess)
 
 	results, err := mcall.TryAggregateStatic3(calls, client, nil)
 	if err != nil {

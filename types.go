@@ -26,6 +26,7 @@ type commonCall struct {
 	FuncSignature string
 	Args          []interface{}
 	ReturnTypes   []string
+	CallData      []byte
 }
 
 type Call struct {
@@ -49,6 +50,7 @@ type CallsInterface interface {
 	GetTarget(i int) *common.Address
 	GetFuncSignature(i int) string
 	GetArgs(i int) []interface{}
+	GetCallData(i int) []byte
 	GetReturnTypes(i int) []string
 	GetValue(i int) *big.Int
 	Len() int
@@ -65,7 +67,7 @@ type CallsWithFailure []CallWithFailure
 
 func NewCall(
 	target common.Address, funcSignature string,
-	args []interface{}, returnTypes []string, value *big.Int,
+	args []interface{}, callData []byte, returnTypes []string, value *big.Int,
 ) Call {
 	return Call{
 		commonCall: commonCall{
@@ -73,6 +75,7 @@ func NewCall(
 			FuncSignature: funcSignature,
 			Args:          args,
 			ReturnTypes:   returnTypes,
+			CallData:      callData,
 		},
 		Value: value,
 	}
@@ -80,13 +83,13 @@ func NewCall(
 
 func NewCalls(
 	targets []common.Address, funcSignatures []string,
-	argss [][]interface{}, returnTypess [][]string, values []*big.Int,
+	argss [][]interface{}, callDatas [][]byte, returnTypess [][]string, values []*big.Int,
 ) Calls {
 	calls := make(Calls, len(targets))
 	for i, target := range targets {
-		args, returnTypes, value := setParameters(i, argss, returnTypess, values)
+		args, callData, returnTypes, value := setParameters(i, argss, callDatas, returnTypess, values)
 
-		calls[i] = NewCall(target, funcSignatures[i], args, returnTypes, value)
+		calls[i] = NewCall(target, funcSignatures[i], args, callData, returnTypes, value)
 	}
 
 	return calls
@@ -94,7 +97,7 @@ func NewCalls(
 
 func NewCallWithFailure(
 	target common.Address, funcSignature string, args []interface{},
-	returnTypes []string, value *big.Int, requireSuccess bool,
+	callData []byte, returnTypes []string, value *big.Int, requireSuccess bool,
 ) CallWithFailure {
 	return CallWithFailure{
 		Call: Call{
@@ -112,13 +115,13 @@ func NewCallWithFailure(
 
 func NewCallsWithFailure(
 	targets []common.Address, funcSignatures []string, argss [][]interface{},
-	returnTypess [][]string, values []*big.Int, requireSuccesss []bool,
+	callDatas [][]byte, returnTypess [][]string, values []*big.Int, requireSuccesss []bool,
 ) CallsWithFailure {
 	calls := make(CallsWithFailure, len(targets))
 	for i, target := range targets {
-		args, returnTypes, value := setParameters(i, argss, returnTypess, values)
+		args, callData, returnTypes, value := setParameters(i, argss, callDatas, returnTypess, values)
 
-		calls[i] = NewCallWithFailure(target, funcSignatures[i], args, returnTypes, value, requireSuccesss[i])
+		calls[i] = NewCallWithFailure(target, funcSignatures[i], args, callData, returnTypes, value, requireSuccesss[i])
 	}
 
 	return calls
@@ -160,13 +163,20 @@ func ParseCallWithFailureToCallsWithFailure(calls []CallWithFailure) CallsWithFa
 }
 
 func setParameters(
-	index int, argss [][]interface{}, returnTypess [][]string, values []*big.Int,
-) ([]any, []string, *big.Int) {
+	index int, argss [][]interface{}, callDatas [][]byte, returnTypess [][]string, values []*big.Int,
+) ([]any, []byte, []string, *big.Int) {
 	var args []any
 	if argss == nil {
 		args = nil
 	} else {
 		args = argss[index]
+	}
+
+	var callData []byte
+	if callDatas == nil {
+		callData = nil
+	} else {
+		callData = callDatas[index]
 	}
 
 	var returnTypes []string
@@ -183,7 +193,7 @@ func setParameters(
 		value = values[index]
 	}
 
-	return args, returnTypes, value
+	return args, callData, returnTypes, value
 }
 
 func (c Calls) GetTarget(i int) *common.Address {
@@ -196,6 +206,10 @@ func (c Calls) GetFuncSignature(i int) string {
 
 func (c Calls) GetArgs(i int) []interface{} {
 	return c[i].Args
+}
+
+func (c Calls) GetCallData(i int) []byte {
+	return c[i].CallData
 }
 
 func (c Calls) GetReturnTypes(i int) []string {
@@ -217,15 +231,17 @@ func (c Calls) ToArray(withValue bool, isMultiCall3Type bool) ([]any, *big.Int, 
 		var args []any
 		args = append(args, c.GetTarget(i))
 
-		var callData []byte
-		var err error
-		if c.GetArgs(i) != nil || len(c.GetArgs(i)) > 0 {
-			callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i), c.GetArgs(i)...)
-		} else {
-			callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i))
-		}
-		if err != nil {
-			return nil, nil, err
+		callData := c.GetCallData(i)
+		if callData == nil {
+			var err error
+			if c.GetArgs(i) != nil || len(c.GetArgs(i)) > 0 {
+				callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i), c.GetArgs(i)...)
+			} else {
+				callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i))
+			}
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 		args = append(args, callData)
 
@@ -257,6 +273,10 @@ func (c CallsWithFailure) GetArgs(i int) []interface{} {
 	return c[i].Args
 }
 
+func (c CallsWithFailure) GetCallData(i int) []byte {
+	return c[i].CallData
+}
+
 func (c CallsWithFailure) GetReturnTypes(i int) []string {
 	return c[i].ReturnTypes
 }
@@ -282,15 +302,17 @@ func (c CallsWithFailure) ToArray(withValue bool, isMultiCall3Type bool) ([]any,
 	for i := 0; i < c.Len(); i++ {
 		var args []any
 
-		var callData []byte
-		var err error
-		if c.GetArgs(i) != nil || len(c.GetArgs(i)) > 0 {
-			callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i), c.GetArgs(i)...)
-		} else {
-			callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i))
-		}
-		if err != nil {
-			return nil, nil, err
+		callData := c.GetCallData(i)
+		if callData == nil {
+			var err error
+			if c.GetArgs(i) != nil || len(c.GetArgs(i)) > 0 {
+				callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i), c.GetArgs(i)...)
+			} else {
+				callData, err = abi.EncodeWithSignature(c.GetFuncSignature(i))
+			}
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 
 		if isMultiCall3Type {
