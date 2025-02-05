@@ -28,7 +28,7 @@ func aggregate(
 		return Result{}, err
 	}
 
-	return parseResults(calls, decodedCallResult, receipt.Status == 1, receipt)
+	return parseResults(decodedCallResult, receipt.Status == 1, receipt)
 }
 
 func tryAggregate(
@@ -79,7 +79,7 @@ func tryAggregate(
 		return Result{}, err
 	}
 
-	return parseResults(calls, decodedCallResult, receipt.Status == 1, receipt)
+	return parseResults(decodedCallResult, receipt.Status == 1, receipt)
 }
 
 func tryAggregate3(
@@ -98,7 +98,7 @@ func tryAggregate3(
 		return Result{}, err
 	}
 
-	return parseResults(calls, decodedCallResult, receipt.Status == 1, receipt)
+	return parseResults(decodedCallResult, receipt.Status == 1, receipt)
 }
 
 func aggregateTx(
@@ -177,7 +177,7 @@ func aggregateStatic(
 		return Result{}, err
 	}
 
-	return parseResults(calls, decodedAggregatedCallsResultVar, true, decodedCallResult)
+	return parseResults(decodedAggregatedCallsResultVar, true, decodedCallResult)
 }
 
 func tryAggregateStatic(
@@ -209,7 +209,7 @@ func tryAggregateStatic(
 		return Result{}, err
 	}
 
-	return parseResults(calls, decodedAggregatedCallsResultVar, true, decodedCallResult)
+	return parseResults(decodedAggregatedCallsResultVar, true, decodedCallResult)
 }
 
 func tryAggregateStatic3(
@@ -241,7 +241,7 @@ func tryAggregateStatic3(
 		return Result{}, err
 	}
 
-	return parseResults(calls, decodedAggregatedCallsResultVar, true, decodedCallResult)
+	return parseResults(decodedAggregatedCallsResultVar, true, decodedCallResult)
 }
 
 func getCodeLengths(
@@ -343,6 +343,10 @@ func makeCall(
 		return nil, nil, err
 	}
 
+	for len(decodedCallResult) != calls.Len() {
+		decodedCallResult = decodedCallResult[0].([]any)
+	}
+
 	decodedAggregatedCallsResultVar, err := decodeAggregateCallsResult(decodedCallResult, calls)
 	if err != nil {
 		return nil, nil, err
@@ -352,18 +356,13 @@ func makeCall(
 }
 
 func parseResults(
-	calls CallsInterface, decodedCallResult []any, status bool, callOrTxResult any,
+	decodedCallResult []any, status bool, callOrTxResult any,
 ) (Result, error) {
-	decodedAggregatedCallsResultVar, err := decodeAggregateCallsResult(decodedCallResult, calls)
-	if err != nil {
-		return Result{}, err
-	}
-
 	var result Result
-	if len(decodedAggregatedCallsResultVar) == 0 {
+	if len(decodedCallResult) > 0 {
 		result = Result{
 			Success: status,
-			Result:  decodedAggregatedCallsResultVar,
+			Result:  decodedCallResult,
 			Error:   nil,
 		}
 	} else {
@@ -379,19 +378,22 @@ func parseResults(
 
 func decodeAggregateCallsResult(result []any, calls CallsInterface) ([]any, error) {
 	var decodedResult []any
-	for i, r := range result {
-		if len(calls.GetReturnTypes(i)) == 0 {
-			continue
-		}
+	for i, res := range result {
+		returnTypes := calls.GetReturnTypes(i)
+		if returnTypes != nil {
+			r, ok := res.([]byte)
+			if ok {
+				decodedR, err := abi.Decode(returnTypes, r)
+				if err != nil {
+					return nil, err
+				}
 
-		if calls.GetReturnTypes(i) != nil {
-			decodedR, err := abi.Decode(calls.GetReturnTypes(i), r.([]byte))
-			if err != nil {
-				return nil, err
+				decodedResult = append(decodedResult, decodedR)
+			} else {
+				decodedResult = append(decodedResult, res)
 			}
-			decodedResult = append(decodedResult, decodedR)
 		} else {
-			decodedResult = append(decodedResult, r.([]byte))
+			decodedResult = append(decodedResult, res.([]byte))
 		}
 	}
 
