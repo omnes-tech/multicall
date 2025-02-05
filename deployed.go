@@ -390,10 +390,10 @@ func decodeAggregateCallsResult(result []any, calls CallsInterface) ([]any, erro
 
 				decodedResult = append(decodedResult, decodedR)
 			} else {
-				decodedResult = append(decodedResult, res)
+				decodedResult = append(decodedResult, res.([]any))
 			}
 		} else {
-			decodedResult = append(decodedResult, res.([]byte))
+			decodedResult = append(decodedResult, res.([]any))
 		}
 	}
 
