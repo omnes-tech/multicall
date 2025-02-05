@@ -380,7 +380,7 @@ func decodeAggregateCallsResult(result []any, calls CallsInterface) ([]any, erro
 	var decodedResult []any
 	for i, res := range result {
 		returnTypes := calls.GetReturnTypes(i)
-		if returnTypes != nil {
+		if returnTypes != nil || len(returnTypes) > 0 {
 			r, ok := res.([]byte)
 			if ok {
 				decodedR, err := abi.Decode(returnTypes, r)
