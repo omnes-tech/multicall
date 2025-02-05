@@ -383,11 +383,16 @@ func decodeAggregateCallsResult(result []any, calls CallsInterface) ([]any, erro
 		if len(calls.GetReturnTypes(i)) == 0 {
 			continue
 		}
-		decodedR, err := abi.Decode(calls.GetReturnTypes(i), r.([]byte))
-		if err != nil {
-			return nil, err
+
+		if calls.GetReturnTypes(i) != nil {
+			decodedR, err := abi.Decode(calls.GetReturnTypes(i), r.([]byte))
+			if err != nil {
+				return nil, err
+			}
+			decodedResult = append(decodedResult, decodedR)
+		} else {
+			decodedResult = append(decodedResult, r.([]byte))
 		}
-		decodedResult = append(decodedResult, decodedR)
 	}
 
 	return decodedResult, nil
