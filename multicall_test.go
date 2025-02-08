@@ -24,7 +24,7 @@ func ExampleNewClient() {
 	fmt.Printf("MultiCallType: %d WriteAddress: %s ReadAddress: %s",
 		mcall.MultiCallType, mcall.WriteAddress, mcall.ReadAddress)
 
-	// Output: MultiCallType: 0 WriteAddress: 0xcA11bde05977b3631167028862bE2a173976CA11 ReadAddress: <nil>
+	// Output: MultiCallType: 0 WriteAddress: 0xcA11bde05977b3631167028862bE2a173976CA11 ReadAddress: 0xc4CE14dCBfacf913dCC06a659672dc6d412C50D5
 }
 
 func ExampleMultiCall_SimulateCall() {
@@ -54,7 +54,7 @@ func ExampleMultiCall_SimulateCall() {
 
 	calls := multicall.NewCalls(targets, funcSigs, nil, nil, nil, values)
 
-	results, err := mcall.SimulateCall(calls, client, nil)
+	results := mcall.SimulateCall(calls, client, nil)
 
 	fmt.Println(results)
 
@@ -94,10 +94,7 @@ func ExampleMultiCall_AggregateStatic() {
 
 	calls := multicall.NewCalls(targets, funcSigs, argss, nil, returnTypes, nil)
 
-	results, err := mcall.AggregateStatic(calls, client, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	results := mcall.AggregateStatic(calls, client, nil)
 
 	fmt.Println(results)
 
@@ -137,10 +134,7 @@ func ExampleMultiCall_TryAggregateStatic() {
 
 	calls := multicall.NewCalls(targets, funcSigs, argss, nil, returnTypes, nil)
 
-	results, err := mcall.TryAggregateStatic(calls, true, client, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	results := mcall.TryAggregateStatic(calls, true, client, nil)
 
 	fmt.Println(results)
 
@@ -181,10 +175,7 @@ func ExampleMultiCall_TryAggregateStatic3() {
 
 	calls := multicall.NewCallsWithFailure(targets, funcSigs, argss, nil, returnTypes, nil, requireSuccess)
 
-	results, err := mcall.TryAggregateStatic3(calls, client, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	results := mcall.TryAggregateStatic3(calls, client, nil)
 
 	fmt.Println(results)
 
@@ -210,10 +201,7 @@ func ExampleMultiCall_CodeLengths() {
 		&address,
 	}
 
-	results, err := mcall.CodeLengths(targets, client, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	results := mcall.CodeLengths(targets, client, nil)
 
 	fmt.Println(results)
 
@@ -239,10 +227,7 @@ func ExampleMultiCall_Balances() {
 		&address,
 	}
 
-	results, err := mcall.Balances(targets, client, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	results := mcall.Balances(targets, client, nil)
 
 	fmt.Println(results)
 }
@@ -266,10 +251,7 @@ func ExampleMultiCall_AddressesData() {
 		&address,
 	}
 
-	results, err := mcall.AddressesData(targets, client, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	results := mcall.AddressesData(targets, client, nil)
 
 	fmt.Println(results)
 }
@@ -286,10 +268,7 @@ func ExampleMultiCall_ChainData() {
 		panic(err)
 	}
 
-	results, err := mcall.ChainData(client, nil)
-	if err != nil {
-		fmt.Println(err)
-	}
+	results := mcall.ChainData(client, nil)
 
 	fmt.Println(results)
 }

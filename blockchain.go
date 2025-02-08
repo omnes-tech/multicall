@@ -33,7 +33,7 @@ func readContract(
 		blockNumber,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading contract: %w, with data: %s", err, common.Bytes2Hex(encodedCall))
 	}
 
 	return result, nil

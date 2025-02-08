@@ -14,7 +14,8 @@ import (
 type CallType uint8
 
 const (
-	SIMULATION = iota
+	SIMULATE_CALL = iota
+	SIMULATE_DELEGATE_CALL
 	STATIC_CALL
 	TRY_STATIC_CALL
 	TRY_STATIC_CALL2
@@ -29,16 +30,16 @@ type CallsWithRequireSuccess struct {
 	RequireSuccess bool
 }
 
-func deploylessSimulation(calls Calls, client *ethclient.Client, blockNumber *big.Int) (Result, error) {
+func deploylessSimulation(calls Calls, client *ethclient.Client, blockNumber *big.Int) Result {
 	arrayfiedCalls, _, err := calls.ToArray(true, false)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	_, err = makeDeploylessCall(
 		arrayfiedCalls,
 		false,
-		SIMULATION,
+		SIMULATE_CALL,
 		client,
 		[]string{"(address,bytes,uint256)[]"},
 		blockNumber,
@@ -52,7 +53,7 @@ func deploylessSimulation(calls Calls, client *ethclient.Client, blockNumber *bi
 					encodedRevert,
 				)
 				if err != nil {
-					return Result{}, err
+					return Result{Success: false, Error: err}
 				}
 				decodedRevert = decodedRevert[0].([]any)
 
@@ -63,19 +64,19 @@ func deploylessSimulation(calls Calls, client *ethclient.Client, blockNumber *bi
 				return Result{
 					Success: true,
 					Result:  decodedRevert,
-				}, nil
+				}
 			}
 		}
-		return Result{Success: false, Error: err}, err
+		return Result{Success: false, Error: err}
 	}
 
-	return Result{Success: false, Error: fmt.Errorf("call did not revert")}, nil
+	return Result{Success: false, Error: fmt.Errorf("call did not returned simulation result")}
 }
 
-func deploylessAggregateStatic(calls Calls, client *ethclient.Client, blockNumber *big.Int) (Result, error) {
+func deploylessAggregateStatic(calls Calls, client *ethclient.Client, blockNumber *big.Int) Result {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	rawResponse, err := makeDeploylessCall(
@@ -87,12 +88,12 @@ func deploylessAggregateStatic(calls Calls, client *ethclient.Client, blockNumbe
 		blockNumber,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	resultArgs, err := abi.Decode([]string{"bytes[]"}, common.Hex2Bytes(rawResponse[2:]))
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 	resultArgs = resultArgs[0].([]any)
 
@@ -100,21 +101,21 @@ func deploylessAggregateStatic(calls Calls, client *ethclient.Client, blockNumbe
 	for i, call := range calls {
 		result_i, err := abi.Decode(call.ReturnTypes, resultArgs[i].([]byte))
 		if err != nil {
-			return Result{Success: false, Error: err}, err
+			return Result{Success: false, Error: err}
 		}
 
 		result = append(result, result_i)
 	}
 
-	return Result{Success: true, Result: result}, nil
+	return Result{Success: true, Result: result}
 }
 
 func deploylessTryAggregateStatic(
 	calls Calls, requireSuccess bool, client *ethclient.Client, blockNumber *big.Int,
-) (Result, error) {
+) Result {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	rawResponse, err := makeDeploylessCall(
@@ -126,12 +127,12 @@ func deploylessTryAggregateStatic(
 		blockNumber,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	resultArgs, err := abi.Decode([]string{"(bool,bytes)[]"}, common.Hex2Bytes(rawResponse[2:]))
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 	resultArgs = resultArgs[0].([]any)
 
@@ -139,21 +140,21 @@ func deploylessTryAggregateStatic(
 	for i, call := range calls {
 		resultArgs[i].([]any)[1], err = abi.Decode(call.ReturnTypes, resultArgs[i].([]any)[1].([]byte))
 		if err != nil {
-			return Result{Success: false, Error: err}, err
+			return Result{Success: false, Error: err}
 		}
 
 		result = append(result, resultArgs[i])
 	}
 
-	return Result{Success: true, Result: result}, nil
+	return Result{Success: true, Result: result}
 }
 
 func deploylessTryAggregateStatic3(
 	calls CallsWithFailure, client *ethclient.Client, blockNumber *big.Int,
-) (Result, error) {
+) Result {
 	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	rawResponse, err := makeDeploylessCall(
@@ -165,12 +166,12 @@ func deploylessTryAggregateStatic3(
 		blockNumber,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	resultArgs, err := abi.Decode([]string{"(bool,bytes)[]"}, common.Hex2Bytes(rawResponse[2:]))
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 	resultArgs = resultArgs[0].([]any)
 
@@ -178,69 +179,69 @@ func deploylessTryAggregateStatic3(
 	for i, call := range calls {
 		resultArgs[i].([]any)[1], err = abi.Decode(call.ReturnTypes, resultArgs[i].([]any)[1].([]byte))
 		if err != nil {
-			return Result{Success: false, Error: err}, err
+			return Result{Success: false, Error: err}
 		}
 
 		result = append(result, resultArgs[i])
 	}
 
-	return Result{Success: true, Result: result}, nil
+	return Result{Success: true, Result: result}
 }
 
 func deploylessGetCodeLengths(
 	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
-) (Result, error) {
+) Result {
 
 	rawResponse, err := makeDeploylessCall(
 		toAnyArray(addresses), false, CODE_LENGTH, client, []string{"address[]"}, blockNumber,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	resultArgs, err := abi.Decode([]string{"uint256[]"}, common.Hex2Bytes(rawResponse[2:]))
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 	resultArgs = resultArgs[0].([]any)
 
-	return Result{Success: true, Result: resultArgs}, nil
+	return Result{Success: true, Result: resultArgs}
 }
 
 func deploylessGetBalances(
 	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
-) (Result, error) {
+) Result {
 
 	rawResponse, err := makeDeploylessCall(
 		toAnyArray(addresses), false, BALANCES, client, []string{"address[]"}, blockNumber,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	resultArgs, err := abi.Decode([]string{"uint256[]"}, common.Hex2Bytes(rawResponse[2:]))
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 	resultArgs = resultArgs[0].([]any)
 
-	return Result{Success: true, Result: resultArgs}, nil
+	return Result{Success: true, Result: resultArgs}
 }
 
 func deploylessGetAddressesData(
 	addresses []*common.Address, client *ethclient.Client, blockNumber *big.Int,
-) (Result, error) {
+) Result {
 
 	rawResponse, err := makeDeploylessCall(
 		toAnyArray(addresses), false, ADDRESSES_DATA, client, []string{"address[]"}, blockNumber,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	resultArgs, err := abi.Decode([]string{"uint256[]", "uint256[]"}, common.Hex2Bytes(rawResponse[2:]))
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	var result [][]any
@@ -248,16 +249,16 @@ func deploylessGetAddressesData(
 		result = append(result, []any{resultArgs[0].([]any)[i], resultArgs[1].([]any)[i]})
 	}
 
-	return Result{Success: true, Result: result}, nil
+	return Result{Success: true, Result: result}
 }
 
-func deploylessGetChainData(client *ethclient.Client, blockNumber *big.Int) (Result, error) {
+func deploylessGetChainData(client *ethclient.Client, blockNumber *big.Int) Result {
 
 	rawResponse, err := makeDeploylessCall(
 		nil, false, CHAIN_DATA, client, nil, blockNumber,
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
 	resultArgs, err := abi.Decode(
@@ -275,10 +276,10 @@ func deploylessGetChainData(client *ethclient.Client, blockNumber *big.Int) (Res
 		common.Hex2Bytes(rawResponse[2:]),
 	)
 	if err != nil {
-		return Result{}, err
+		return Result{Success: false, Error: err}
 	}
 
-	return Result{Success: true, Result: resultArgs}, nil
+	return Result{Success: true, Result: resultArgs}
 }
 
 func makeDeploylessCall(
@@ -321,7 +322,7 @@ func makeDeploylessCall(
 		"data": data,
 	}, blockNumberStr)
 	if err != nil {
-		return rawResponse, err
+		return rawResponse, fmt.Errorf("error making deployless call: %w, with data: %s", err, data)
 	}
 
 	return rawResponse, nil
