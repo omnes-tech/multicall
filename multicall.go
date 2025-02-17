@@ -108,100 +108,120 @@ func NewMultiCall(multiCallType MultiCallType, client *ethclient.Client, signer 
 }
 
 func (m *MultiCall) AggregateCalls(
-	calls []Call, client *ethclient.Client, blockNumber *big.Int,
+	calls []Call, client *ethclient.Client, blockNumber *big.Int, isCall bool,
 ) Result {
-	if m.Signer == nil {
+	if m.Signer == nil && !isCall {
 		return Result{Success: false, Error: fmt.Errorf("no signer configured")}
 	}
 
 	if m.MultiCallType == GENERAL {
-		return transact(
-			calls,
-			false,
-			client,
-			*m.Signer,
-			m.WriteAddress,
-			"aggregate((address,bytes)[])",
-			[]string{"bytes[]"},
-			false,
-			false,
-		)
+		if isCall {
+			return m.AggregateStatic(calls, client, blockNumber)
+		} else {
+			return transact(
+				calls,
+				false,
+				client,
+				*m.Signer,
+				m.WriteAddress,
+				"aggregate((address,bytes)[])",
+				[]string{"bytes[]"},
+				false,
+				false,
+			)
+		}
 	} else if m.MultiCallType == OMNES {
-		return transact(
-			calls,
-			false,
-			client,
-			*m.Signer,
-			m.WriteAddress,
-			"aggregateCalls((address,bytes,uint256)[])",
-			[]string{"bytes[]"},
-			true,
-			false,
-		)
+		if isCall {
+			return m.AggregateStatic(calls, client, blockNumber)
+		} else {
+			return transact(
+				calls,
+				false,
+				client,
+				*m.Signer,
+				m.WriteAddress,
+				"aggregateCalls((address,bytes,uint256)[])",
+				[]string{"bytes[]"},
+				true,
+				false,
+			)
+		}
 	} else {
 		return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 	}
 }
 
 func (m *MultiCall) TryAggregateCalls(
-	calls []Call, requireSuccess bool, client *ethclient.Client, blockNumber *big.Int,
+	calls []Call, requireSuccess bool, client *ethclient.Client, blockNumber *big.Int, isCall bool,
 ) Result {
-	if m.Signer == nil {
+	if m.Signer == nil && !isCall {
 		return Result{Success: false, Error: fmt.Errorf("no signer configured")}
 	}
 
 	if m.MultiCallType == GENERAL {
 		return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 	} else if m.MultiCallType == OMNES {
-		return transact(
-			calls,
-			requireSuccess,
-			client,
-			*m.Signer,
-			m.WriteAddress,
-			"tryAggregateCalls((address,bytes,uint256)[],bool)",
-			[]string{"(bool,bytes)[]"},
-			true,
-			false,
-		)
+		if isCall {
+			return m.TryAggregateStatic(calls, requireSuccess, client, blockNumber)
+		} else {
+			return transact(
+				calls,
+				requireSuccess,
+				client,
+				*m.Signer,
+				m.WriteAddress,
+				"tryAggregateCalls((address,bytes,uint256)[],bool)",
+				[]string{"(bool,bytes)[]"},
+				true,
+				false,
+			)
+		}
 	} else {
 		return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 	}
 }
 
 func (m *MultiCall) TryAggregateCalls3(
-	calls []CallWithFailure, client *ethclient.Client, blockNumber *big.Int,
+	calls []CallWithFailure, client *ethclient.Client, blockNumber *big.Int, isCall bool,
 ) Result {
-	if m.Signer == nil {
+	if m.Signer == nil && !isCall {
 		return Result{Success: false, Error: fmt.Errorf("no signer configured")}
 	}
 
 	if m.MultiCallType == GENERAL {
 		withValue, funcSignature := isWithValue(calls)
 
-		return transactWithFailure(
-			calls,
-			false,
-			client,
-			*m.Signer,
-			m.WriteAddress,
-			funcSignature,
-			[]string{"(bool,bytes)[]"},
-			withValue,
-			true,
-		)
+		if isCall {
+			return m.TryAggregateStatic3(calls, client, blockNumber)
+		} else {
+			return transactWithFailure(
+				calls,
+				false,
+				client,
+				*m.Signer,
+				m.WriteAddress,
+				funcSignature,
+				[]string{"(bool,bytes)[]"},
+				withValue,
+				true,
+			)
+		}
 	} else if m.MultiCallType == OMNES {
-		return transactWithFailure(
-			calls,
-			false,
-			client,
-			*m.Signer,
-			m.WriteAddress,
-			"tryAggregateCalls((address,bytes,uint256,bool)[])",
-			[]string{"(bool,bytes)[]"},
-			true,
-			false,
-		)
+		if isCall {
+			return m.TryAggregateStatic3(calls, client, blockNumber)
+		} else {
+			return transactWithFailure(
+				calls,
+				false,
+				client,
+				*m.Signer,
+				m.WriteAddress,
+				"tryAggregateCalls((address,bytes,uint256,bool)[])",
+				[]string{"(bool,bytes)[]"},
+				true,
+				false,
+			)
+		}
 	} else {
 		return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 	}
