@@ -108,7 +108,7 @@ func write(
 func call(
 	calls Calls, requireSuccess bool, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address,
-	blockNumber *big.Int, isSimulation bool,
+	blockNumber *big.Int, isSimulation bool, withValue bool,
 ) Result {
 	return read(
 		calls,
@@ -121,12 +121,14 @@ func call(
 		writeAddress,
 		blockNumber,
 		isSimulation,
+		withValue,
 	)
 }
 
 func callWithFailure(
 	calls CallsWithFailure, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
+	withValue bool,
 ) Result {
 	return read(
 		calls,
@@ -139,15 +141,16 @@ func callWithFailure(
 		writeAddress,
 		blockNumber,
 		false,
+		withValue,
 	)
 }
 
 func read(
 	calls CallsInterface, requireSuccess bool, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
-	isSimulation bool,
+	isSimulation bool, withValue bool,
 ) Result {
-	arrayfiedCalls, _, err := calls.ToArray(false, false)
+	arrayfiedCalls, _, err := calls.ToArray(withValue, false)
 	if err != nil {
 		return Result{Success: false, Error: err}
 	}
