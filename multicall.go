@@ -116,7 +116,7 @@ func (m *MultiCall) AggregateCalls(
 
 	if m.MultiCallType == GENERAL {
 		if isCall {
-			return m.AggregateStatic(calls, client, blockNumber)
+			return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 		} else {
 			return transact(
 				calls,
@@ -132,7 +132,18 @@ func (m *MultiCall) AggregateCalls(
 		}
 	} else if m.MultiCallType == OMNES {
 		if isCall {
-			return m.AggregateStatic(calls, client, blockNumber)
+			return call(
+				calls,
+				false,
+				client,
+				m.WriteAddress,
+				"aggregate((address,bytes)[])",
+				[]string{"bytes[]"},
+				&m.MultiCallType,
+				m.WriteAddress,
+				blockNumber,
+				false,
+			)
 		} else {
 			return transact(
 				calls,
@@ -162,7 +173,18 @@ func (m *MultiCall) TryAggregateCalls(
 		return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 	} else if m.MultiCallType == OMNES {
 		if isCall {
-			return m.TryAggregateStatic(calls, requireSuccess, client, blockNumber)
+			return call(
+				calls,
+				requireSuccess,
+				client,
+				m.WriteAddress,
+				"tryAggregateCalls((address,bytes,uint256)[],bool)",
+				[]string{"(bool,bytes)[]"},
+				&m.MultiCallType,
+				m.WriteAddress,
+				blockNumber,
+				false,
+			)
 		} else {
 			return transact(
 				calls,
@@ -192,7 +214,7 @@ func (m *MultiCall) TryAggregateCalls3(
 		withValue, funcSignature := isWithValue(calls)
 
 		if isCall {
-			return m.TryAggregateStatic3(calls, client, blockNumber)
+			return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 		} else {
 			return transactWithFailure(
 				calls,
@@ -208,7 +230,16 @@ func (m *MultiCall) TryAggregateCalls3(
 		}
 	} else if m.MultiCallType == OMNES {
 		if isCall {
-			return m.TryAggregateStatic3(calls, client, blockNumber)
+			return callWithFailure(
+				calls,
+				client,
+				m.WriteAddress,
+				"tryAggregateCalls((address,bytes,uint256,bool)[])",
+				[]string{"(bool,bytes)[]"},
+				&m.MultiCallType,
+				m.WriteAddress,
+				blockNumber,
+			)
 		} else {
 			return transactWithFailure(
 				calls,
