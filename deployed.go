@@ -105,10 +105,77 @@ func write(
 	return parseResults(decodedCallResult, receipt.Status == 1, receipt)
 }
 
+func txAsReadWithFailure(
+	calls CallsWithFailure, requireSuccess bool, client *ethclient.Client, to *common.Address,
+	funcSignature string, txReturnTypes []string, multiCallType *MultiCallType,
+) Result {
+	return asRead(
+		calls,
+		requireSuccess,
+		client,
+		to,
+		funcSignature,
+		txReturnTypes,
+		multiCallType,
+	)
+}
+
+func txAsRead(
+	calls Calls, requireSuccess bool, client *ethclient.Client, to *common.Address,
+	funcSignature string, txReturnTypes []string, multiCallType *MultiCallType,
+) Result {
+	return asRead(
+		calls,
+		requireSuccess,
+		client,
+		to,
+		funcSignature,
+		txReturnTypes,
+		multiCallType,
+	)
+}
+
+func asRead(
+	calls CallsInterface, requireSuccess bool, client *ethclient.Client, to *common.Address,
+	funcSignature string, txReturnTypes []string, multiCallType *MultiCallType,
+) Result {
+	arrayfiedCalls, _, err := calls.ToArray(true, false)
+	if err != nil {
+		return Result{Success: false, Error: err}
+	}
+
+	var callData []byte
+	if funcSignature == "tryAggregateCalls((address,bytes,uint256)[],bool)" {
+		callData, err = abi.EncodeWithSignature(funcSignature, arrayfiedCalls, requireSuccess)
+	} else {
+		callData, err = abi.EncodeWithSignature(funcSignature, arrayfiedCalls)
+	}
+	if err != nil {
+		return Result{Success: false, Error: err}
+	}
+
+	decodedCallResult, decodedAggregatedCallsResultVar, err := makeCall(
+		calls,
+		client,
+		to,
+		callData,
+		txReturnTypes,
+		false,
+		multiCallType,
+		nil,
+		nil,
+	)
+	if err != nil {
+		return Result{Success: false, Error: err}
+	}
+
+	return parseResults(decodedAggregatedCallsResultVar, true, decodedCallResult)
+}
+
 func call(
 	calls Calls, requireSuccess bool, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address,
-	blockNumber *big.Int, isSimulation bool, withValue bool,
+	blockNumber *big.Int, isSimulation bool,
 ) Result {
 	return read(
 		calls,
@@ -121,14 +188,12 @@ func call(
 		writeAddress,
 		blockNumber,
 		isSimulation,
-		withValue,
 	)
 }
 
 func callWithFailure(
 	calls CallsWithFailure, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
-	withValue bool,
 ) Result {
 	return read(
 		calls,
@@ -141,16 +206,15 @@ func callWithFailure(
 		writeAddress,
 		blockNumber,
 		false,
-		withValue,
 	)
 }
 
 func read(
 	calls CallsInterface, requireSuccess bool, client *ethclient.Client, to *common.Address, funcSignature string,
 	txReturnTypes []string, multiCallType *MultiCallType, writeAddress *common.Address, blockNumber *big.Int,
-	isSimulation bool, withValue bool,
+	isSimulation bool,
 ) Result {
-	arrayfiedCalls, _, err := calls.ToArray(withValue, false)
+	arrayfiedCalls, _, err := calls.ToArray(false, false)
 	if err != nil {
 		return Result{Success: false, Error: err}
 	}

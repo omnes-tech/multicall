@@ -132,18 +132,14 @@ func (m *MultiCall) AggregateCalls(
 		}
 	} else if m.MultiCallType == OMNES {
 		if isCall {
-			return call(
+			return txAsRead(
 				calls,
 				false,
 				client,
 				m.WriteAddress,
-				"aggregate((address,bytes)[])",
+				"aggregateCalls((address,bytes,uint256)[])",
 				[]string{"bytes[]"},
 				&m.MultiCallType,
-				m.WriteAddress,
-				blockNumber,
-				false,
-				true,
 			)
 		} else {
 			return transact(
@@ -174,7 +170,7 @@ func (m *MultiCall) TryAggregateCalls(
 		return Result{Success: false, Error: fmt.Errorf("cannot do call with multi call type %d", m.MultiCallType)}
 	} else if m.MultiCallType == OMNES {
 		if isCall {
-			return call(
+			return txAsRead(
 				calls,
 				requireSuccess,
 				client,
@@ -182,10 +178,6 @@ func (m *MultiCall) TryAggregateCalls(
 				"tryAggregateCalls((address,bytes,uint256)[],bool)",
 				[]string{"(bool,bytes)[]"},
 				&m.MultiCallType,
-				m.WriteAddress,
-				blockNumber,
-				false,
-				true,
 			)
 		} else {
 			return transact(
@@ -232,16 +224,14 @@ func (m *MultiCall) TryAggregateCalls3(
 		}
 	} else if m.MultiCallType == OMNES {
 		if isCall {
-			return callWithFailure(
+			return txAsReadWithFailure(
 				calls,
+				false,
 				client,
 				m.WriteAddress,
 				"tryAggregateCalls((address,bytes,uint256,bool)[])",
 				[]string{"(bool,bytes)[]"},
 				&m.MultiCallType,
-				m.WriteAddress,
-				blockNumber,
-				true,
 			)
 		} else {
 			return transactWithFailure(
@@ -279,7 +269,6 @@ func (m *MultiCall) SimulateCall(
 			m.WriteAddress,
 			blockNumber,
 			true,
-			false,
 		)
 	} else {
 		return deploylessSimulation(calls, client, blockNumber)
@@ -303,7 +292,6 @@ func (m *MultiCall) AggregateStatic(
 			&m.MultiCallType,
 			m.WriteAddress,
 			blockNumber,
-			false,
 			false,
 		)
 	} else {
@@ -329,7 +317,6 @@ func (m *MultiCall) TryAggregateStatic(
 			m.WriteAddress,
 			blockNumber,
 			false,
-			false,
 		)
 	} else {
 		return deploylessTryAggregateStatic(calls, requireSuccess, client, blockNumber)
@@ -352,7 +339,6 @@ func (m *MultiCall) TryAggregateStatic3(
 			&m.MultiCallType,
 			m.WriteAddress,
 			blockNumber,
-			false,
 		)
 	} else {
 		return deploylessTryAggregateStatic3(calls, client, blockNumber)
