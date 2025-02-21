@@ -38,4 +38,6 @@ Read (call) functions:
 - `Balances`
 - `AddressesData`
 
-Check out the address [here](https://github.com/omnes-tech/multicall-contract/blob/main/README.md#deployments) to see the deployed addresses for the different chains.
+## Deployed Smart Contracts
+
+Check out the deployed addresses [here](https://github.com/omnes-tech/multicall-contract/blob/main/README.md#deployments) on different chains.
