@@ -1,6 +1,7 @@
 package multicall
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -32,7 +33,29 @@ type TxOrCall struct {
 	AccessList types.AccessList
 }
 
-type TxOrCallInterface interface {
+func (t *TxOrCall) String() string {
+	return fmt.Sprintf(`TxOrCall{
+	From: %s, 
+	To: %s, 
+	Gas: %d, 
+	GasPrice: %s, 
+	Value: %s, 
+	Data: %s,
+	Nonce: %d,
+	BlockNumber: %s,
+	AccessList: %v,
+}
+`,
+		t.From.Hex(),
+		t.To.Hex(),
+		t.Gas,
+		t.GasPrice.String(),
+		t.Value.String(),
+		common.Bytes2Hex(t.Data),
+		t.Nonce,
+		t.BlockNumber.String(),
+		t.AccessList,
+	)
 }
 
 func FromTxToTxOrCall(tx *types.Transaction, from common.Address, blockNumber *big.Int) TxOrCall {
