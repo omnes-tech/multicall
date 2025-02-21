@@ -19,24 +19,26 @@ import (
 // readContract makes a call to a contract and returns the returned bytecode.
 func readContract(
 	client *ethclient.Client, from, to *common.Address, encodedCall []byte, blockNumber *big.Int,
-) ([]byte, error) {
+) ([]byte, *ethereum.CallMsg, error) {
 	if from == nil {
 		from = &ZERO_ADDRESS
 	}
 
+	call := ethereum.CallMsg{
+		From: *from,
+		To:   to,
+		Data: encodedCall,
+	}
+
 	result, err := client.CallContract(context.Background(),
-		ethereum.CallMsg{
-			From: *from,
-			To:   to,
-			Data: encodedCall,
-		},
+		call,
 		blockNumber,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error reading contract: %w, with data: %s", err, common.Bytes2Hex(encodedCall))
+		return nil, nil, fmt.Errorf("error reading contract: %w, with data: %s", err, common.Bytes2Hex(encodedCall))
 	}
 
-	return result, nil
+	return result, &call, nil
 }
 
 // createTransaction creates a new transaction object.

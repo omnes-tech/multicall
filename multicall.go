@@ -140,6 +140,7 @@ func (m *MultiCall) AggregateCalls(
 				"aggregateCalls((address,bytes,uint256)[])",
 				[]string{"bytes[]"},
 				&m.MultiCallType,
+				blockNumber,
 			)
 		} else {
 			return transact(
@@ -178,6 +179,7 @@ func (m *MultiCall) TryAggregateCalls(
 				"tryAggregateCalls((address,bytes,uint256)[],bool)",
 				[]string{"(bool,bytes)[]"},
 				&m.MultiCallType,
+				blockNumber,
 			)
 		} else {
 			return transact(
@@ -232,6 +234,7 @@ func (m *MultiCall) TryAggregateCalls3(
 				"tryAggregateCalls((address,bytes,uint256,bool)[])",
 				[]string{"(bool,bytes)[]"},
 				&m.MultiCallType,
+				blockNumber,
 			)
 		} else {
 			return transactWithFailure(

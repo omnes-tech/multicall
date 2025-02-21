@@ -3,7 +3,9 @@ package multicall
 import (
 	"math/big"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/omnes-tech/abi"
 )
 
@@ -15,10 +17,55 @@ const (
 	DEPLOYLESS
 )
 
+type TxOrCall struct {
+	From        common.Address
+	To          *common.Address
+	Gas         uint64
+	GasPrice    *big.Int
+	GasFeeCap   *big.Int
+	GasTipCap   *big.Int
+	Value       *big.Int
+	Data        []byte
+	Nonce       uint64
+	BlockNumber *big.Int
+
+	AccessList types.AccessList
+}
+
+type TxOrCallInterface interface {
+}
+
+func FromTxToTxOrCall(tx *types.Transaction, from common.Address, blockNumber *big.Int) TxOrCall {
+	return TxOrCall{
+		From:        from,
+		To:          tx.To(),
+		Gas:         tx.Gas(),
+		GasPrice:    tx.GasPrice(),
+		Value:       tx.Value(),
+		Data:        tx.Data(),
+		Nonce:       tx.Nonce(),
+		AccessList:  tx.AccessList(),
+		BlockNumber: blockNumber,
+	}
+}
+
+func FromCallToTxOrCall(call *ethereum.CallMsg, blockNumber *big.Int) TxOrCall {
+	return TxOrCall{
+		From:        call.From,
+		To:          call.To,
+		Gas:         call.Gas,
+		GasPrice:    call.GasPrice,
+		Value:       call.Value,
+		Data:        call.Data,
+		BlockNumber: blockNumber,
+	}
+}
+
 type Result struct {
-	Success bool
-	Result  any
-	Error   error
+	Success  bool
+	Result   any
+	Error    error
+	TxOrCall TxOrCall
 }
 
 type commonCall struct {
